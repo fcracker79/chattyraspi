@@ -10,8 +10,26 @@
       <file>
 	<source>${project.build.directory}${file.separator}${artifactId}-${version}-runner</source>
 	<outputDirectory>/</outputDirectory>
-	<destName>bootstrap</destName>
+	<destName>bootstrap.bin</destName>
 	<fileMode>755</fileMode>
       </file>
+        <file>
+            <source>${project.basedir}${file.separator}src${file.separator}main${file.separator}resources${file.separator}/cacerts</source>
+            <outputDirectory>/ssl</outputDirectory>
+            <destName>cacerts</destName>
+            <fileMode>644</fileMode>
+        </file>
+        <file>
+            <source>${project.basedir}${file.separator}src${file.separator}main${file.separator}resources${file.separator}bootstrap</source>
+            <outputDirectory>/</outputDirectory>
+            <destName>bootstrap</destName>
+            <fileMode>755</fileMode>
+        </file>
+        <file>
+            <source>${project.basedir}${file.separator}src${file.separator}main${file.separator}resources${file.separator}libsunec.so</source>
+            <outputDirectory>/ssl</outputDirectory>
+            <destName>libsunec.so</destName>
+            <fileMode>755</fileMode>
+        </file>
     </files>
 </assembly>

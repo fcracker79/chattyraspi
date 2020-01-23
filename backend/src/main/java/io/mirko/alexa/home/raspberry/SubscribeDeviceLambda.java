@@ -6,7 +6,7 @@ import javax.inject.Named;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 
-@Named("test")
+@Named("subscribe")
 public class SubscribeDeviceLambda implements RequestHandler<InputObject, OutputObject> {
 
     @Inject
