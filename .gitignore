@@ -1,3 +1,5 @@
 backend/.idea
 backend/target
 *.iml
+skill/.idea
+skill/target
