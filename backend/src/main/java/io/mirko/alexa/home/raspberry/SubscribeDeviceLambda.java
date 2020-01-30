@@ -8,6 +8,7 @@ import io.mirko.alexa.home.raspberry.exceptions.UnauthorizedException;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,8 +26,15 @@ public class SubscribeDeviceLambda implements RequestHandler<Map<String, Object>
         result.put("isBase64Encoded", false);
         result.put("statusCode", 200);
 
-        String accessToken = (String) ((Map<String, Object>) input.get("body")).get("access_token");
-        String deviceId = (String) ((Map<String, Object>) input.get("body")).get("device_id");
+        final Map<String, Object> body;
+
+        try {
+            body = MAPPER.readValue((String) input.get("body"), Map.class);
+        } catch(IOException e) {
+            throw new RuntimeException(e);
+        }
+        String accessToken = (String) body.get("access_token");;
+        String deviceId = (String) body.get("device_id");
         System.out.format("Registering device %s, access token %s", deviceId, accessToken);
         try {
             deviceRepository.registerDevice(deviceId, accessToken);
@@ -34,10 +42,10 @@ public class SubscribeDeviceLambda implements RequestHandler<Map<String, Object>
             System.err.println("Error attempting to use accessToken. We will hide the issue for security reasons");
             e.printStackTrace();
         }
-        HashMap<String, Object> body = new HashMap<>();
-        body.put("result", "success");
+        HashMap<String, Object> responseBody = new HashMap<>();
+        responseBody.put("result", "success");
         try {
-            result.put("body", MAPPER.writeValueAsString(body));
+            result.put("body", MAPPER.writeValueAsString(responseBody));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

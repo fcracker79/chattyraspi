@@ -19,7 +19,7 @@ public class DynamoDBDeviceRepository implements DeviceRepository {
     @Inject
     AmazonDynamoDB dynamoDB;
 
-    @ConfigProperty(name="devices_table")
+    @ConfigProperty(name="io.mirko.alexa.home.raspberry.devices_table")
     String devicesTable;
 
     @Inject

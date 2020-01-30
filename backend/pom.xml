@@ -100,6 +100,19 @@
                                 </goals>
                                 <configuration>
                                     <enableHttpUrlHandler>true</enableHttpUrlHandler>
+                                    <enableHttpsUrlHandler>true</enableHttpsUrlHandler>
+                                    <additionalBuildArgs>
+                                        <additionalBuildArg>
+                                            -H:ReflectionConfigurationFiles=reflection-config.json
+                                        </additionalBuildArg>
+                                        <additionalBuildArg>
+                                            -H:DynamicProxyConfigurationFiles=proxy-config.json
+                                        </additionalBuildArg>
+                                        <additionalBuildArg>
+                                            -H:ResourceConfigurationFiles=resource-config.json
+                                        </additionalBuildArg>
+                                    </additionalBuildArgs>
+
                                 </configuration>
                             </execution>
                         </executions>
