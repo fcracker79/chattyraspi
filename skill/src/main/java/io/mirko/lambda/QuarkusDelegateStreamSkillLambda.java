@@ -24,33 +24,6 @@ import java.util.stream.Stream;
 public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map, Map> {
     private static final ObjectMapper JSON_OBJECT_MAPPER = new ObjectMapper();
 
-    private final SkillStreamHandler delegate;
-    public QuarkusDelegateStreamSkillLambda() {
-        delegate = new SkillStreamHandler(
-                Skills.standard()
-                        .addRequestHandlers(getBeans(com.amazon.ask.dispatcher.request.handler.RequestHandler.class).toArray(com.amazon.ask.dispatcher.request.handler.RequestHandler[]::new))
-                        .addRequestInterceptor(new GenericRequestInterceptor<HandlerInput>() {
-                            @Override
-                            public void process(HandlerInput handlerInput) {
-                                System.out.format("Processing %s\n", handlerInput.getRequest());
-                            }
-                        })
-                        .withSkillId("io.mirko.raspberry")
-                        .build()
-        ) {
-        };
-    }
-
-    private InputStream streamFromRequest(Map request) {
-        try {
-            return new ByteArrayInputStream(
-                JSON_OBJECT_MAPPER.writerFor(Map.class).writeValueAsBytes(request)
-            );
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     @Override
     public Map handleRequest(Map request, Context context) {
         System.out.format("************ Handling request %s\n", request);
