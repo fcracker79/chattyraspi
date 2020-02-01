@@ -1,0 +1,1 @@
+r2 = requests.get('https://api.amazon.com/user/profile', headers={'x-amz-access-token': 'access token')
