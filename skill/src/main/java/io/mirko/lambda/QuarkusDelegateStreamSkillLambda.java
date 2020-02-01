@@ -35,8 +35,7 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map, Map
                                 System.out.format("Processing %s\n", handlerInput.getRequest());
                             }
                         })
-                        // Add your skill id below
-                        //.withSkillId("")
+                        .withSkillId("io.mirko.raspberry")
                         .build()
         ) {
         };
