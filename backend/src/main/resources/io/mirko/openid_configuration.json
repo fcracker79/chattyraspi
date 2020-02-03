@@ -1,0 +1,172 @@
+{
+  "issuer": "raspberry.alexa.mirko.io",
+  "jwks_uri": "${OPENID_URL}/jwks.json",
+  "authorization_endpoint": "${OPENID_URL}/auth",
+  "scopes_supported": [
+    "profile"
+  ],
+  "response_types_supported": [
+    "code"
+  ],
+  "response_modes_supported": [
+    "query",
+    "fragment",
+    "form_post"
+  ],
+  "grant_types_supported": [
+    "refresh_token",
+    "password",
+    "urn:ietf:params:oauth:grant-type:jwt-bearer"
+  ],
+  "code_challenge_methods_supported": [
+    "S256",
+    "plain"
+  ],
+  "token_endpoint_auth_methods_supported": [
+    "client_secret_basic",
+    "client_secret_post",
+    "client_secret_jwt",
+    "private_key_jwt",
+    "self_signed_tls_client_auth",
+    "none"
+  ],
+  "token_endpoint_auth_signing_alg_values_supported": [
+    "HS256",
+    "HS384",
+    "HS512",
+    "RS256",
+    "RS384",
+    "RS512",
+    "PS256",
+    "PS384",
+    "PS512",
+    "ES256",
+    "ES384",
+    "ES512"
+  ],
+  "request_object_signing_alg_values_supported": [
+    "HS256",
+    "HS384",
+    "HS512",
+    "RS256",
+    "RS384",
+    "RS512",
+    "PS256",
+    "PS384",
+    "PS512",
+    "ES256",
+    "ES384",
+    "ES512",
+    "none"
+  ],
+  "ui_locales_supported": [
+    "en"
+  ],
+  "request_parameter_supported": true,
+  "request_uri_parameter_supported": true,
+  "require_request_uri_registration": false,
+  "request_uri_quota": 10,
+  "subject_types_supported": [
+    "public",
+    "pairwise"
+  ],
+  "acr_values_supported": [
+    "0"
+  ],
+  "id_token_signing_alg_values_supported": [
+    "RS256",
+    "RS384",
+    "RS512",
+    "PS256",
+    "PS384",
+    "PS512",
+    "ES256",
+    "ES384",
+    "ES512",
+    "HS256",
+    "HS384",
+    "HS512",
+    "none"
+  ],
+  "id_token_encryption_alg_values_supported": [
+    "RSA1_5",
+    "RSA-OAEP",
+    "RSA-OAEP-256",
+    "ECDH-ES",
+    "ECDH-ES+A128KW",
+    "ECDH-ES+A192KW",
+    "ECDH-ES+A256KW",
+    "dir",
+    "A128KW",
+    "A192KW",
+    "A256KW",
+    "A128GCMKW",
+    "A192GCMKW",
+    "A256GCMKW"
+  ],
+  "id_token_encryption_enc_values_supported": [
+    "A128CBC-HS256",
+    "A192CBC-HS384",
+    "A256CBC-HS512",
+    "A128GCM",
+    "A192GCM",
+    "A256GCM"
+  ],
+  "userinfo_signing_alg_values_supported": [
+    "RS256",
+    "RS384",
+    "RS512",
+    "PS256",
+    "PS384",
+    "PS512",
+    "ES256",
+    "ES384",
+    "ES512",
+    "HS256",
+    "HS384",
+    "HS512"
+  ],
+  "userinfo_encryption_alg_values_supported": [
+    "RSA1_5",
+    "RSA-OAEP",
+    "RSA-OAEP-256",
+    "ECDH-ES",
+    "ECDH-ES+A128KW",
+    "ECDH-ES+A192KW",
+    "ECDH-ES+A256KW",
+    "dir",
+    "A128KW",
+    "A192KW",
+    "A256KW",
+    "A128GCMKW",
+    "A192GCMKW",
+    "A256GCMKW"
+  ],
+  "userinfo_encryption_enc_values_supported": [
+    "A128CBC-HS256",
+    "A192CBC-HS384",
+    "A256CBC-HS512",
+    "A128GCM",
+    "A192GCM",
+    "A256GCM"
+  ],
+  "display_values_supported": [
+    "page",
+    "popup"
+  ],
+  "claim_types_supported": [
+    "normal"
+  ],
+  "claims_supported": [
+    "sub",
+    "iss",
+    "auth_time",
+    "acr",
+    "name",
+    "given_name",
+    "family_name",
+    "email",
+    "email_verified"
+  ],
+  "claims_parameter_supported": true
+}
