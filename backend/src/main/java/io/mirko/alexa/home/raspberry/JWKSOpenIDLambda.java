@@ -8,6 +8,7 @@ import com.amazonaws.services.simplesystemsmanagement.model.GetParameterRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import java.math.BigInteger;
 import java.security.KeyFactory;
@@ -23,8 +24,8 @@ import java.util.Map;
 @Named("jwks")
 public class JWKSOpenIDLambda implements RequestHandler<Map<String, Object>, Map<String, Object>> {
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
-    private final AWSSimpleSystemsManagement client =
-            AWSSimpleSystemsManagementClientBuilder.defaultClient();
+    @Inject
+    RSAPrivateCrtKey rsaKey;
 
     private String resultBody;
 
@@ -38,21 +39,9 @@ public class JWKSOpenIDLambda implements RequestHandler<Map<String, Object>, Map
     @Override
     public Map<String, Object> handleRequest(Map<String, Object> input, Context context) {
         if (resultBody == null) {
-            String sRSAKey = client.getParameter(
-                    new GetParameterRequest().withName(System.getenv("SSM_KEY_NAME")).withWithDecryption(true)
-            ).getParameter().getValue().replaceAll("\n", "");
-            byte[] bRSAKey = Base64.getDecoder().decode(sRSAKey.getBytes());
-            System.out.format("My key is %s bytes long", bRSAKey.length);
-            final RSAPrivateCrtKey privKey;
-            try {
-                KeyFactory kf = KeyFactory.getInstance("RSA");
-                PKCS8EncodedKeySpec keySpecPKCS8 = new PKCS8EncodedKeySpec(bRSAKey);
-                privKey = (RSAPrivateCrtKey) kf.generatePrivate(keySpecPKCS8);
-            } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-                throw new RuntimeException(e);
-            }
-            BigInteger n = privKey.getModulus();
-            BigInteger e = privKey.getPublicExponent();
+
+            BigInteger n = rsaKey.getModulus();
+            BigInteger e = rsaKey.getPublicExponent();
             final Map<String, Object> resultBodyMap = new HashMap<>();
             Map<String, Object> keyMap = new HashMap<>();
             keyMap.put("e", encode(e, 3));
