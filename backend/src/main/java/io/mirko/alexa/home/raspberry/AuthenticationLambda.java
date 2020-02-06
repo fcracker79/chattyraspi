@@ -45,8 +45,16 @@ public class AuthenticationLambda implements RequestHandler<Map<String, Object>,
         final String accessToken = (String) body.get("access_token");
         final String userId = profileService.getProfile(accessToken).user_id;
         final int statusCode;
-        if (deviceRepository.isValidDevice(deviceId, userId)) {
+        if (!deviceRepository.existsDevice(deviceId)) {
             statusCode = 200;
+            deviceRepository.registerDevice(deviceId, accessToken);
+        } else if (deviceRepository.isValidDevice(deviceId, userId)) {
+            statusCode = 200;
+        } else {
+            statusCode = 401;
+        }
+        result.put("statusCode", statusCode);
+        if (statusCode == 200) {
             try {
                 result.put(
                         "body",
@@ -58,11 +66,7 @@ public class AuthenticationLambda implements RequestHandler<Map<String, Object>,
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
-        } else {
-            statusCode = 401;
         }
-        result.put("statusCode", statusCode);
-
         return result;
     }
 }

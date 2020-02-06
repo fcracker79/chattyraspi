@@ -47,4 +47,16 @@ public class DynamoDBDeviceRepository implements DeviceRepository {
         final Map<String, AttributeValue> item = result.getItem();
         return item != null && item.get("device_id").getS().equals(deviceId) && item.get("aws_id").getS().equals(userId);
     }
+
+    @Override
+    public boolean existsDevice(String deviceId) {
+        final Map<String, AttributeValue> row = new HashMap<>();
+        row.put("device_id", new AttributeValue(deviceId));
+        final GetItemResult result = dynamoDB.getItem(devicesTable, row);
+        if (result == null || result.getItem() == null) {
+            return false;
+        }
+        final Map<String, AttributeValue> item = result.getItem();
+        return item != null && item.get("device_id").getS().equals(deviceId);
+    }
 }
