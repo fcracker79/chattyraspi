@@ -53,7 +53,7 @@ public class Main {
             Jwts.builder().setId(UUID.randomUUID().toString())
                     .setIssuedAt(new Date())
                     .setHeader(headers)
-                    .setSubject("testDevice")
+                    .setSubject("admin")
                     .setIssuer("raspberry.alexa.mirko.io")
                     .setExpiration(new Date(System.currentTimeMillis() + 3600000))
                     .signWith(SignatureAlgorithm.RS256, createFromBytes(getRSAKey()))
