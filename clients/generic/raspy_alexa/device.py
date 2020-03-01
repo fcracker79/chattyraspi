@@ -1,0 +1,38 @@
+import uuid
+
+import yaml
+
+
+def get_machine_id() -> str:
+    with open('/etc/machine-id', 'r') as f:
+        return str(uuid.UUID(hex=f.readline()))
+
+
+class DevicesConfiguration:
+    def __init__(self, filename: str):
+        self._filename = filename
+        self._data = None
+
+    def get_configuration(self) -> dict:
+        if self._data is None:
+            try:
+                with open(self._filename, 'r') as f:
+                    self._data = yaml.scan(f)
+            except FileNotFoundError:
+                with open(self._filename, 'w+') as f:
+                    self._data = {}
+        return self._data
+
+    def add_configuration(self, device_id: str, amazon_user_id: str) -> None:
+        configuration = self.get_configuration()
+        devices = configuration.setdefault('Devices', [])
+        found_devices = list(filter(lambda d: d['device_id'] == device_id, devices))
+        if found_devices:
+            if found_devices[0]['amazon_user_id'] != amazon_user_id:
+                raise ValueError('Device %s exists with different AWS id'.format(device_id))
+            return
+        devices.append({'device_id': device_id, 'amazon_user_id': amazon_user_id})
+        self._data = None
+        with open(self._filename, 'w') as f:
+            yaml.dump(configuration, stream=f)
+        return
