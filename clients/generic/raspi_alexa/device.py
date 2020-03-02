@@ -17,21 +17,22 @@ class DevicesConfiguration:
         if self._data is None:
             try:
                 with open(self._filename, 'r') as f:
-                    self._data = yaml.scan(f)
+                    self._data = yaml.load(f, Loader=yaml.FullLoader) or {}
             except FileNotFoundError:
                 with open(self._filename, 'w+') as f:
                     self._data = {}
         return self._data
 
-    def add_configuration(self, device_id: str, amazon_user_id: str) -> None:
+    def add_configuration(self, device_id: str, amazon_user_id: str, openid_token: str) -> None:
         configuration = self.get_configuration()
         devices = configuration.setdefault('Devices', [])
         found_devices = list(filter(lambda d: d['device_id'] == device_id, devices))
         if found_devices:
             if found_devices[0]['amazon_user_id'] != amazon_user_id:
                 raise ValueError('Device %s exists with different AWS id'.format(device_id))
+            devices[0]['openid_token'] = openid_token
             return
-        devices.append({'device_id': device_id, 'amazon_user_id': amazon_user_id})
+        devices.append({'device_id': device_id, 'amazon_user_id': amazon_user_id, 'openid_token': openid_token})
         self._data = None
         with open(self._filename, 'w') as f:
             yaml.dump(configuration, stream=f)

@@ -8,16 +8,15 @@ major, minor1, minor2, release, serial = sys.version_info
 
 readfile_kwargs = {"encoding": "utf-8"} if major >= 3 else {}
 
-
 def readfile(filename):
     with open(filename, **readfile_kwargs) as fp:
         contents = fp.read()
     return contents
 
 def get_scripts() -> list:
-    [f for f in listdir('bin') if isfile(join(mypath, f))]
+    path = os.path.join(os.path.dirname(__file__), 'bin')
+    return [os.path.join('bin', os.path.basename(f)) for f in listdir(path) if isfile(join(path, f))]
 
-packages = get_packages('raspi_alexa')
 setup(name='raspi_alexa',
       version='0.0.1',
       description='TODO',
