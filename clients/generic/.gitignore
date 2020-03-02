@@ -1,2 +1,7 @@
 .idea
 venv
+dist
+*.egg-info
+*.pyc
+__pycache__/
+raspi_alexa.yml
