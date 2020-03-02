@@ -17,6 +17,9 @@ public class SubscribeDeviceLambda implements RequestHandler<Map<String, Object>
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Inject
+    JWTTokenGenerator tokenGenerator;
+
+    @Inject
     DeviceRepository deviceRepository;
 
     @Override
@@ -44,6 +47,7 @@ public class SubscribeDeviceLambda implements RequestHandler<Map<String, Object>
         }
         HashMap<String, Object> responseBody = new HashMap<>();
         responseBody.put("result", "success");
+        responseBody.put("data", tokenGenerator.generateToken(deviceId));
         try {
             result.put("body", MAPPER.writeValueAsString(responseBody));
         } catch (JsonProcessingException e) {
