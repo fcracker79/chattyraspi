@@ -1,6 +1,5 @@
 import json
 import os
-from pprint import pprint
 from urllib.parse import urlencode
 import aiohttp
 import aiohttp_jinja2
@@ -32,7 +31,6 @@ async def get_amazon_user_id(access_token: str) -> str:
 
 
 async def login(request):
-    pprint(request.headers)
     arguments = {
         'device_id': VAR['device_id'],
         'subscribe_url': 'http://{}/subscription'.format(request.headers.get('Host'))
