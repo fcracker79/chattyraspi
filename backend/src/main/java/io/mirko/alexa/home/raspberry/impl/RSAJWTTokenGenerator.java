@@ -4,6 +4,7 @@ import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.mirko.alexa.home.raspberry.JWTTokenGenerator;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -17,6 +18,8 @@ import java.util.UUID;
 @ApplicationScoped
 @Named
 public class RSAJWTTokenGenerator implements JWTTokenGenerator {
+    @ConfigProperty(name = "io.mirko.alexa.home.raspberry.openid.token_duration_seconds")
+    long durationSeconds;
     @Inject
     RSAPrivateCrtKey rsaKey;
 
@@ -28,7 +31,7 @@ public class RSAJWTTokenGenerator implements JWTTokenGenerator {
                 .setSubject(deviceId)
                 .setHeader(headers)
                 .setIssuer("raspberry.alexa.mirko.io")
-                .setExpiration(new Date(System.currentTimeMillis() + 3600000))
+                .setExpiration(new Date(System.currentTimeMillis() + durationSeconds * 1000))
                 .signWith(SignatureAlgorithm.RS256, rsaKey)
                 .compact();
     }

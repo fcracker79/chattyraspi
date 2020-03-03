@@ -1,5 +1,5 @@
 #!/bin/sh
 
 
-echo "Running ./bootstrap.bin -Djava.library.path=${LAMBDA_TASK_ROOT}/ssl -Djavax.net.ssl.trustStore=${LAMBDA_TASK_ROOT}/ssl/cacerts -Djavax.net.ssl.trustAnchors=${LAMBDA_TASK_ROOT}/ssl/cacerts -Djavax.net.ssl.trustStorePassword=changeit"
-./bootstrap.bin -Djava.library.path=${LAMBDA_TASK_ROOT}/ssl -Djavax.net.ssl.trustStore=${LAMBDA_TASK_ROOT}/ssl/cacerts -Djavax.net.ssl.trustAnchors=${LAMBDA_TASK_ROOT}/ssl/cacerts -Djavax.net.ssl.trustStorePassword=changeit
+echo "Running ./bootstrap.bin -Djava.io.tmpdir=/tmp -Djava.library.path=${LAMBDA_TASK_ROOT}/ssl -Djavax.net.ssl.trustStore=${LAMBDA_TASK_ROOT}/ssl/cacerts -Djavax.net.ssl.trustAnchors=${LAMBDA_TASK_ROOT}/ssl/cacerts -Djavax.net.ssl.trustStorePassword=changeit"
+./bootstrap.bin -Djava.io.tmpdir=/tmp -Djava.library.path=${LAMBDA_TASK_ROOT}/ssl -Djavax.net.ssl.trustStore=${LAMBDA_TASK_ROOT}/ssl/cacerts -Djavax.net.ssl.trustAnchors=${LAMBDA_TASK_ROOT}/ssl/cacerts -Djavax.net.ssl.trustStorePassword=changeit
