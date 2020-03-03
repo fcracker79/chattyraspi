@@ -4,3 +4,5 @@ cchardet==2.1.5
 aiodns==2.0.0
 click==7.0
 PyYAML==5.3
+requests==2.23.0
+paho-mqtt==1.5.0
