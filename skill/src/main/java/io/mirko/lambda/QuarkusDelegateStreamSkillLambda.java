@@ -55,12 +55,12 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map, Map
 
     private Map<String, Object> turnOff(Map<String, Object> request, Context context, String deviceId) {
         final String commandId = commandSubmitter.submitCommand(deviceId, CommandType.TURN_ON);
-        return waitForCommandExecuted(request, commandId, "ON", deviceId);
+        return waitForCommandExecuted(request, commandId, "OFF", deviceId);
     }
 
     private Map<String, Object> turnOn(Map<String, Object> request, Context context, String deviceId) {
         final String commandId = commandSubmitter.submitCommand(deviceId, CommandType.TURN_OFF);
-        return waitForCommandExecuted(request, commandId, "OFF", deviceId);
+        return waitForCommandExecuted(request, commandId, "ON", deviceId);
     }
 
     private Map<String, Object> waitForCommandExecuted(
