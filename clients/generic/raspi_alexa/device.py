@@ -31,8 +31,8 @@ class DevicesConfiguration:
             if found_devices[0]['amazon_user_id'] != amazon_user_id:
                 raise ValueError('Device %s exists with different AWS id'.format(device_id))
             devices[0]['openid_token'] = openid_token
-            return
-        devices.append({'device_id': device_id, 'amazon_user_id': amazon_user_id, 'openid_token': openid_token})
+        else:
+            devices.append({'device_id': device_id, 'amazon_user_id': amazon_user_id, 'openid_token': openid_token})
         self._data = None
         with open(self._filename, 'w') as f:
             yaml.dump(configuration, stream=f)

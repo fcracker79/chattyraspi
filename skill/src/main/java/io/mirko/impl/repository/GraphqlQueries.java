@@ -31,10 +31,10 @@ public final class GraphqlQueries {
     }
 
     public static String fetchCommandStatus() {
-        return query("io.mirko.graphql.fetch_command_status.graphql");
+        return query("io/mirko/graphql/fetch_command_status.graphql");
     }
 
     public static String submitCommand() {
-        return query("io.mirko.graphql.submit_command.graphql");
+        return query("io/mirko/graphql/submit_command.graphql");
     }
 }

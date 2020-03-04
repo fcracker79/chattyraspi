@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+from logging.config import fileConfig
+
+import click
+import typing
+
+from raspi_alexa import server
+from raspi_alexa.client import Client
+from raspi_alexa.device import get_machine_id, DevicesConfiguration
+import socket
+
+
+@click.command()
+@click.option('--logging_conf', help='Full path of logging configuration file')
+@click.option('--config', help='the path of your devices configuration YAML file', required=True)
+def test_devices(
+        logging_conf: typing.Optional[str],
+        config: typing.Optional[str]):
+    if logging_conf:
+        fileConfig(logging_conf, disable_existing_loggers=False)
+
+    config = DevicesConfiguration(config)
+    client = Client(config)
+    for device_id in map(lambda d: d['device_id'], config.get_configuration()['Devices']):
+        client.set_on_turn_on(device_id, lambda: print('Device {} turned ON'.format(device_id)))
+        client.set_on_turn_off(device_id, lambda: print('Device {} turned OFF'.format(device_id)))
+    client.listen()
+
+
+if __name__ == '__main__':
+    test_devices()

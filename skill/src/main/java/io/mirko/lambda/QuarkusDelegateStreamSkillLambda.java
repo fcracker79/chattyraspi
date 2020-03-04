@@ -110,6 +110,7 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map, Map
     private Map<String, Object> toMap(AlexaResponse ar) {
         final String strResponse = ar.toString();
         try {
+            System.out.format("Response: %s\n", strResponse);
             return JSON_OBJECT_MAPPER.readValue(strResponse, Map.class);
         } catch (IOException e) {
             throw new RuntimeException(e);

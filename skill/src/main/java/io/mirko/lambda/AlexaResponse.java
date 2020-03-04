@@ -147,9 +147,9 @@ public class AlexaResponse {
         JSONObject endpoint = new JSONObject();
         endpoint.put("capabilities", new JSONArray(capabilities));
         endpoint.put("description", "Sample Endpoint Description");
-        JSONArray displayCategories = new JSONArray("[\"OTHER\"]");
+        JSONArray displayCategories = new JSONArray("[\"SMARTPLUG\"]");
         endpoint.put("displayCategories", displayCategories);
-        endpoint.put("manufacturerName", "Sample Manufacturer");
+        endpoint.put("manufacturerName", "mirko.io");
 
         if (endpointId == null)
             endpointId = "endpoint_" + 100000 + new Random().nextInt(900000);
