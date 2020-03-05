@@ -54,20 +54,23 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map, Map
     }
 
     private Map<String, Object> turnOff(Map<String, Object> request, Context context, String deviceId) {
-        final String commandId = commandSubmitter.submitCommand(deviceId, CommandType.TURN_ON);
+        final String commandId = commandSubmitter.submitCommand(deviceId, CommandType.TURN_OFF);
         return waitForCommandExecuted(request, commandId, "OFF", deviceId);
     }
 
     private Map<String, Object> turnOn(Map<String, Object> request, Context context, String deviceId) {
-        final String commandId = commandSubmitter.submitCommand(deviceId, CommandType.TURN_OFF);
+        final String commandId = commandSubmitter.submitCommand(deviceId, CommandType.TURN_ON);
         return waitForCommandExecuted(request, commandId, "ON", deviceId);
     }
 
     private Map<String, Object> waitForCommandExecuted(
             Map<String, Object> request,
             String commandId, String powerState, String endpointId) {
+        System.out.println("Waiting for command to be executed...");
         for (int i = 0; i < NUM_SECONDS_TO_WAIT_EXECUTION; i++) {
-            if (commandStatusFetcher.getCommandStatus(commandId) == CommandStatus.NOT_FOUND) {
+            final CommandStatus currentStatus = commandStatusFetcher.getCommandStatus(commandId);
+            System.out.format("Waiting for command to be executed, status %s\n", currentStatus);
+            if (currentStatus == CommandStatus.NOT_FOUND) {
                 final String token = (String)
                         getFromMap(request, "directive.endpoint.scope.token").orElseThrow(RuntimeException::new);
                 final String correlationToken = (String)
@@ -76,6 +79,7 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map, Map
                 ar.AddContextProperty("Alexa.PowerController", "powerState", powerState, 200);
                 return toMap(ar);
             }
+            System.out.println("Retrying in 1 second's time");
             try {
                 Thread.sleep(1000l);
             } catch (InterruptedException e) {

@@ -1,3 +1,4 @@
+import json
 import time
 from concurrent.futures.thread import ThreadPoolExecutor
 from urllib.parse import urlparse
@@ -42,8 +43,8 @@ class DeviceIdClient:
         }
 
         payload = {
-            "query": """
-                subscription onCommand($deviceId: ID!) {
+            "operationName": "onCommand",
+            "query": """subscription onCommand($deviceId: ID!) {
                   onCommandCreated(deviceId: $deviceId) {
                     commandId
                     deviceId
@@ -62,15 +63,19 @@ class DeviceIdClient:
         except Exception:
             print('ERROR!!!!!!!!!!!!', r.content)
             raise
-
-        client_id = r.json()['extensions']['subscription']['mqttConnections'][0]['client']
+        data = r.json()
+        # if data.get('errors'):
+        #     raise ValueError('Error subscribing: {}'.format(data))
+        client_id = data['extensions']['subscription']['mqttConnections'][0]['client']
         ws_url = r.json()['extensions']['subscription']['mqttConnections'][0]['url']
         topic = r.json()['extensions']['subscription']['mqttConnections'][0]['topics'][0]
 
         def on_message(client, userdata, msg):
-            if msg.payload['command'] == 'TURN_ON':
+            command = json.loads(msg.payload.decode())
+            command_id = command['data']['onCommandCreated']['commandId']
+            if command_id == 'turnOn':
                 self.on_turn_on()
-            elif msg.payload['command'] == 'TURN_OFF':
+            elif command_id == 'turnOff':
                 self.on_turn_off()
             else:
                 raise ValueError('Unexpected command {}, payload {}'.format(msg.payload['command'], msg))
