@@ -21,9 +21,25 @@ def test_devices(
 
     config = DevicesConfiguration(config)
     client = Client(config)
+
+    statuses = dict()
+
+    def _turn_on(device_id: str):
+        print('Device {} turned ON'.format(device_id))
+        statuses[device_id] = True
+
+    def _turn_off(device_id: str):
+        print('Device {} turned ON'.format(device_id))
+        statuses[device_id] = False
+
+    def _fetch_is_power_on(device_id: str) -> bool:
+        return statuses[device_id]
+
     for device_id in map(lambda d: d['device_id'], config.get_configuration()['Devices']):
-        client.set_on_turn_on(device_id, lambda: print('Device {} turned ON'.format(device_id)))
-        client.set_on_turn_off(device_id, lambda: print('Device {} turned OFF'.format(device_id)))
+        statuses[d['device_id']] = False
+        client.set_on_turn_on(device_id, _turn_on)
+        client.set_on_turn_off(device_id, _turn_off)
+        client.set_fetch_is_power_on(device_id, _fetch_is_power_on)
     client.listen()
 
 

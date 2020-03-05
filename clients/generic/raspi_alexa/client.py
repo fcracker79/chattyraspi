@@ -25,6 +25,7 @@ class DeviceIdClient:
         self._device_id = device_id
         self.on_turn_on = _do_nothing
         self.on_turn_off = _do_nothing
+        self.fetch_is_power_on = _do_nothing
         self._logger = logging.getLogger('client.raspi.alexa.mirko.io')
 
     @property
@@ -117,6 +118,9 @@ class DeviceIdClient:
                     self.on_turn_on()
                 elif command == 'turnOff':
                     self.on_turn_off()
+                elif command == 'powerStatus':
+                    response = 'ON' if self.fetch_is_power_on() else 'OFF'
+
                 else:
                     raise ValueError('Unexpected command {}, payload {}'.format(msg.payload['command'], msg))
                 self._command_executed(command_id)
@@ -165,6 +169,24 @@ class DeviceIdClient:
             }
         )
 
+    def _command_responded(self, command_id: str, response: str):
+        self._info('Marking command %s as executed', command_id)
+        self._mutation(
+            '''
+            mutation commandResponded($commandId: ID!, $response: String!) {
+                  markCommandAsResponded(id: $commandId, response: $response) {
+                    commandId
+                    command
+                    deviceId
+                  }
+                }
+            ''',
+            {
+                'commandId': command_id,
+                'response': response
+            }
+        )
+
     def _command_failed(self, command_id: str):
         self._error('Marking command %s as FAILED', command_id)
         self._mutation(
@@ -196,6 +218,9 @@ class Client:
 
     def set_on_turn_off(self, device_id: str, fun: callable):
         self._clients_by_device_id[device_id].on_turn_off = fun
+
+    def set_fetch_is_power_on(self, device_id: str, fun: callable):
+        self._clients_by_device_id[device_id].fetch_is_power_on = fun
 
     def listen(self):
         executor = ThreadPoolExecutor(max_workers=len(self._clients_by_device_id))

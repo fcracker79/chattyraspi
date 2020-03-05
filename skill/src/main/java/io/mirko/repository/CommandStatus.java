@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public enum CommandStatus {
+    RESPONDED(4),
     IGNORED(3),
     FAILED(2),
     TO_BE_EXECUTED(1),

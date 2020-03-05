@@ -31,9 +31,20 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map, Map
     @Inject
     CommandStatusFetcher commandStatusFetcher;
 
+    @Inject
+    CommandResponseFetcher commandResponseFetcher;
+
     @Override
     public Map handleRequest(Map request, Context context) {
         System.out.format("************ Handling request %s\n", request);
+
+        if (request.containsKey("directive")) {
+            return manageDirective(request, context);
+        }
+        throw new RuntimeException(String.format("Unexpected payload %s", request));
+    }
+
+    private Map<String, Object> manageDirective(Map request, Context context) {
         Optional<String> namespace = getFromMap(request, "directive.header.namespace");
         Optional<String> header = getFromMap(request, "directive.header.name");
         if ("Alexa.Discovery".equals(namespace.orElse(null)) && "Discover".equals(header.orElse(null))) {
@@ -43,27 +54,34 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map, Map
                     getFromMap(request, "directive.endpoint.endpointId").orElseThrow(RuntimeException::new);
             if ("TurnOn".equals(header.orElse(null))) {
                 return turnOn(request, context, deviceId);
-            } else if ("TurnOff".equals(header.orElse(null))) {
+            } else if ("StateReport".equals(header.orElse(null))) {
                 return turnOff(request, context, deviceId);
+            } else if ("Alexa.PowerController".equals(namespace.orElse(null))) {
+                return stateReport(request, context, deviceId);
             } else {
                 throw new IllegalStateException(String.format("Unexpected header name %s", header));
             }
-        } else {
+        }else {
             throw new IllegalStateException(String.format("Unexpected request %s", request));
         }
     }
 
     private Map<String, Object> turnOff(Map<String, Object> request, Context context, String deviceId) {
         final String commandId = commandSubmitter.submitCommand(deviceId, CommandType.TURN_OFF);
-        return waitForCommandExecuted(request, commandId, "OFF", deviceId);
+        return waitForPowerStateControlCompleted(request, commandId, "OFF", deviceId);
     }
 
     private Map<String, Object> turnOn(Map<String, Object> request, Context context, String deviceId) {
         final String commandId = commandSubmitter.submitCommand(deviceId, CommandType.TURN_ON);
-        return waitForCommandExecuted(request, commandId, "ON", deviceId);
+        return waitForPowerStateControlCompleted(request, commandId, "ON", deviceId);
     }
 
-    private Map<String, Object> waitForCommandExecuted(
+    private Map<String, Object> stateReport(Map<String, Object> request, Context context, String deviceId) {
+        final String commandId = commandSubmitter.submitCommand(deviceId, CommandType.POWER_STATUS);
+        return waitForPowerStateControlCompleted(request, commandId, null, deviceId);
+    }
+
+    private Map<String, Object> waitForPowerStateControlCompleted(
             Map<String, Object> request,
             String commandId, String powerState, String endpointId) {
         System.out.println("Waiting for command to be executed...");
@@ -76,6 +94,10 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map, Map
                 final String correlationToken = (String)
                         getFromMap(request, "directive.header.correlationToken").orElseThrow(RuntimeException::new);
                 AlexaResponse ar = new AlexaResponse("Alexa", "Response", endpointId, token, correlationToken);
+                if (powerState == null) {
+                    powerState = "ON".equals(commandResponseFetcher.getCommandResponse(commandId).orElse(null)) ?
+                            "ON" : "OFF";
+                }
                 ar.AddContextProperty("Alexa.PowerController", "powerState", powerState, 200);
                 return toMap(ar);
             }
@@ -101,7 +123,8 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map, Map
         );
         String capabilityAlexaPowerController = ar.CreatePayloadEndpointCapability(
                 "AlexaInterface", "Alexa.PowerController", "3",
-                "{\"supported\": [ { \"name\": \"powerState\" } ] }");
+                "{\"supported\": [ { \"name\": \"powerState\" } ], \"proactivelyReported\": true,\n" +
+                        "                \"retrievable\": true }");
         String capabilities = "[" + capabilityAlexa + ", " + capabilityAlexaPowerController + "]";
         int i = 1;
         for (Device d : devicesFetcher.getDevices(accountId)) {
