@@ -9,7 +9,7 @@ import requests
 from raspi_alexa.device import DevicesConfiguration
 
 
-# TODO create cloudfront distribution to have a human-readable name
+# Subscriptions are not supported by Cloudfront. So we have to keep the original URL.
 _ROOT_URL = 'https://c7knkzejobbqpnaz4gskh77nmm.appsync-api.eu-west-1.amazonaws.com/graphql'
 
 
