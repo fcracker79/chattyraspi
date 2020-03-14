@@ -29,14 +29,16 @@ def test_devices(
         statuses[device_id] = True
 
     def _turn_off(device_id: str):
-        print('Device {} turned ON'.format(device_id))
+        print('Device {} turned OFF'.format(device_id))
         statuses[device_id] = False
 
     def _fetch_is_power_on(device_id: str) -> bool:
-        return statuses[device_id]
+        print('Device {} requested power status'.format(device_id))
+        status = statuses[device_id]
+        print('Returning', status)
 
     for device_id in map(lambda d: d['device_id'], config.get_configuration()['Devices']):
-        statuses[d['device_id']] = False
+        statuses[device_id] = False
         client.set_on_turn_on(device_id, _turn_on)
         client.set_on_turn_off(device_id, _turn_off)
         client.set_fetch_is_power_on(device_id, _fetch_is_power_on)

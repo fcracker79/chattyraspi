@@ -13,7 +13,7 @@ from raspi_alexa.device import DevicesConfiguration
 _ROOT_URL = 'https://c7knkzejobbqpnaz4gskh77nmm.appsync-api.eu-west-1.amazonaws.com/graphql'
 
 
-def _do_nothing():
+def _do_nothing(_):
     pass
 
 
@@ -113,17 +113,19 @@ class DeviceIdClient:
             command = command_payload['data']['onCommandCreated']['command']
             command_id = command_payload['data']['onCommandCreated']['commandId']
             # noinspection PyBroadException
+
+            response_execution = lambda: self._command_executed(command_id)
             try:
                 if command == 'turnOn':
-                    self.on_turn_on()
+                    self.on_turn_on(self._device_id)
                 elif command == 'turnOff':
-                    self.on_turn_off()
+                    self.on_turn_off(self._device_id)
                 elif command == 'powerStatus':
-                    response = 'ON' if self.fetch_is_power_on() else 'OFF'
-
+                    response = 'ON' if self.fetch_is_power_on(self._device_id) else 'OFF'
+                    response_execution = lambda: self._command_responded(command_id, response)
                 else:
                     raise ValueError('Unexpected command {}, payload {}'.format(msg.payload['command'], msg))
-                self._command_executed(command_id)
+                response_execution()
             except Exception:
                 self._exception('Could not process command %s (%s)', command, command_id)
                 self._command_failed(command_id)
