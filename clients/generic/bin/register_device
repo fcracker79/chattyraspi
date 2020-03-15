@@ -5,7 +5,7 @@ import click
 import typing
 
 from raspi_alexa import server
-from raspi_alexa.device import get_machine_id, DevicesConfiguration
+from raspi_alexa.device import DevicesConfiguration
 import socket
 
 
@@ -27,7 +27,7 @@ def register_device(
             hostname=socket.gethostname(), port=http_port, device_id=device_id
         )
     )
-    server.start_server(DevicesConfiguration(config), device_id or get_machine_id(), http_port=http_port)
+    server.start_server(DevicesConfiguration(config), http_port=http_port)
 
 
 if __name__ == '__main__':
