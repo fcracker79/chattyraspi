@@ -11,20 +11,18 @@ import socket
 
 @click.command()
 @click.option('--logging_conf', help='Full path of logging configuration file')
-@click.option('--device_id', help='A unique device id associated to your Home Alexa device')
 @click.option('--config', help='the path of your devices configuration YAML file', required=True)
 @click.option('--http_port', default=8080, help='The HTTP port to connect via web to initiate a device registration')
 def register_device(
         logging_conf: typing.Optional[str],
-        device_id: typing.Optional[str],
         config: typing.Optional[str],
         http_port: int):
     if logging_conf:
         fileConfig(logging_conf, disable_existing_loggers=False)
 
     print(
-        'Please connect to http://{hostname}:{port} to register your device with ID {device_id}'.format(
-            hostname=socket.gethostname(), port=http_port, device_id=device_id
+        'Please connect to http://{hostname}:{port} to manage your devices'.format(
+            hostname=socket.gethostname(), port=http_port
         )
     )
     server.start_server(DevicesConfiguration(config), http_port=http_port)
