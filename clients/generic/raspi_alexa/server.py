@@ -41,8 +41,8 @@ async def login(request):
     raise web.HTTPFound(login_url)
 
 
-@aiohttp_jinja2.template('logout.jinja2')
-def logout(request):
+@aiohttp_jinja2.template('subscribed.jinja2')
+def subscribed(request):
     return {
         'device_id': request.rel_url.query['device_id']
     }
@@ -54,7 +54,7 @@ async def subscription(request):
     openid_token = json.loads(form_data['data'])['data']
     aws_user = await get_amazon_user_id(form_data['aws_token'])
     VAR['devices_configuration'].add_configuration(device_id, aws_user, openid_token)
-    raise web.HTTPFound('/logout?{}'.format(urlencode({'device_id': device_id})))
+    raise web.HTTPFound('/subscribed?{}'.format(urlencode({'device_id': device_id})))
 
 
 def start_server(devices_configuration: DevicesConfiguration, http_port: int = 8080):
@@ -65,7 +65,7 @@ def start_server(devices_configuration: DevicesConfiguration, http_port: int = 8
         [
             web.get('/', login),
             web.post('/subscription', subscription),
-            web.get('/logout', logout)
+            web.get('/subscribed', subscribed)
         ]
     )
     aiohttp_jinja2.setup(
