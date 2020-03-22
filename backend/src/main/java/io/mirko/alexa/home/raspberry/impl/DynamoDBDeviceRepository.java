@@ -69,15 +69,10 @@ public class DynamoDBDeviceRepository implements DeviceRepository {
     public boolean deleteDevice(String deviceId, String accountId) {
         final Map<String, AttributeValue> row = new HashMap<>();
         row.put("device_id", new AttributeValue(deviceId));
-        final DeleteItemRequest request =
-                new DeleteItemRequest().withTableName(devicesTable)
-                        .withKey(row)
-                        .withConditionExpression("aws_id = :accountId")
-                        .withExpressionAttributeValues(
-                            Collections.singletonMap(":accountId", new AttributeValue(accountId))
-                        );
+        row.put("aws_id", new AttributeValue(accountId));
+
         try {
-            dynamoDB.deleteItem(request);
+            dynamoDB.deleteItem(devicesTable, row);
         } catch(ResourceNotFoundException | ConditionalCheckFailedException e) {
             System.out.format("Could not find device %s\n", deviceId);
             return false;
