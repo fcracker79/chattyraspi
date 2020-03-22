@@ -32,7 +32,8 @@ async def get_amazon_user_id(access_token: str) -> str:
 
 async def login(request):
     arguments = {
-        'subscribe_url': 'http://{}/subscription'.format(request.headers.get('Host'))
+        'subscribe_url': 'http://{}/subscription'.format(request.headers.get('Host')),
+        'delete_url': 'http://{}/delete_device'.format(request.headers.get('Host')),
     }
     login_url = '{login_url}?{arguments}'.format(
             login_url=_LOGIN_URL,
@@ -48,6 +49,13 @@ def subscribed(request):
     }
 
 
+@aiohttp_jinja2.template('deleted.jinja2')
+def deleted(request):
+    return {
+        'device_id': request.rel_url.query['device_id']
+    }
+
+
 async def subscription(request):
     form_data = await request.post()
     device_id = form_data['device_id']
@@ -55,6 +63,13 @@ async def subscription(request):
     aws_user = await get_amazon_user_id(form_data['aws_token'])
     VAR['devices_configuration'].add_configuration(device_id, aws_user, openid_token)
     raise web.HTTPFound('/subscribed?{}'.format(urlencode({'device_id': device_id})))
+
+
+async def delete_device(request):
+    form_data = await request.post()
+    device_id = form_data['device_id']
+    VAR['devices_configuration'].delete_configuration(device_id)
+    raise web.HTTPFound('/deleted?{}'.format(urlencode({'device_id': device_id})))
 
 
 def start_server(devices_configuration: DevicesConfiguration, http_port: int = 8080):
@@ -65,7 +80,9 @@ def start_server(devices_configuration: DevicesConfiguration, http_port: int = 8
         [
             web.get('/', login),
             web.post('/subscription', subscription),
-            web.get('/subscribed', subscribed)
+            web.post('/delete_device', delete_device),
+            web.get('/subscribed', subscribed),
+            web.get('/deleted', deleted)
         ]
     )
     aiohttp_jinja2.setup(

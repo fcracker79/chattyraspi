@@ -1,10 +1,7 @@
 package io.mirko.alexa.home.raspberry.impl;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.GetItemResult;
-import com.amazonaws.services.dynamodbv2.model.QueryRequest;
-import com.amazonaws.services.dynamodbv2.model.QueryResult;
+import com.amazonaws.services.dynamodbv2.model.*;
 import io.mirko.alexa.home.raspberry.Device;
 import io.mirko.alexa.home.raspberry.DeviceRepository;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -67,6 +64,27 @@ public class DynamoDBDeviceRepository implements DeviceRepository {
         final Map<String, AttributeValue> item = result.getItem();
         return item != null && item.get("device_id").getS().equals(deviceId);
     }
+
+    @Override
+    public boolean deleteDevice(String deviceId, String accountId) {
+        final Map<String, AttributeValue> row = new HashMap<>();
+        row.put("device_id", new AttributeValue(deviceId));
+        final DeleteItemRequest request =
+                new DeleteItemRequest().withTableName(devicesTable)
+                        .withKey(row)
+                        .withConditionExpression("aws_id = :accountId")
+                        .withExpressionAttributeValues(
+                            Collections.singletonMap(":accountId", new AttributeValue(accountId))
+                        );
+        try {
+            dynamoDB.deleteItem(request);
+        } catch(ResourceNotFoundException | ConditionalCheckFailedException e) {
+            System.out.format("Could not find device %s\n", deviceId);
+            return false;
+        }
+        return true;
+    }
+
 
     @Override
     public Iterable<Device> getDevices(String accountId) {

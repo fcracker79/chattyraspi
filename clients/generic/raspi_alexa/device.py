@@ -37,3 +37,22 @@ class DevicesConfiguration:
         with open(self._filename, 'w') as f:
             yaml.dump(configuration, stream=f)
         return
+
+    def delete_configuration(self, device_id: str) -> None:
+        configuration = self.get_configuration()
+        devices = configuration.setdefault('Devices', [])
+
+        indexes_to_remove = list(
+            map(
+                lambda i_d: i_d[0],
+                filter(
+                    lambda i_d_2: i_d_2[1]['device_id'] == device_id,
+                    enumerate(devices)
+                ))
+        )
+        for idx in indexes_to_remove:
+            devices.pop(idx)
+        self._data = None
+        with open(self._filename, 'w') as f:
+            yaml.dump(configuration, stream=f)
+        return
