@@ -95,7 +95,7 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
         for (int i = 0; i < NUM_SECONDS_TO_WAIT_EXECUTION; i++) {
             final CommandStatus currentStatus = commandStatusFetcher.getCommandStatus(commandId);
             System.out.format("Waiting for command to be executed, status %s\n", currentStatus);
-            if (currentStatus == CommandStatus.NOT_FOUND) {
+            if (currentStatus == CommandStatus.NOT_FOUND || currentStatus == CommandStatus.RESPONDED) {
                 final String token = (String)
                         getFromMap(request, "directive.endpoint.scope.token").orElseThrow(RuntimeException::new);
                 final String correlationToken = (String)

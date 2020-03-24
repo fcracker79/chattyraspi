@@ -34,7 +34,15 @@ public final class GraphqlQueries {
         return query("io/mirko/graphql/fetch_command_status.graphql");
     }
 
+    public static String fetchCommandResponse() {
+        return query("io/mirko/graphql/fetch_command_response.graphql");
+    }
+
     public static String submitCommand() {
         return query("io/mirko/graphql/submit_command.graphql");
+    }
+
+    public static String deleteCommand() {
+        return query("io/mirko/graphql/delete_command.graphql");
     }
 }

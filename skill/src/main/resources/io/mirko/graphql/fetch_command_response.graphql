@@ -1,0 +1,5 @@
+query commandId($commandId: ID!) {
+  getCommand(commandId: $commandId) {
+      arguments
+  }
+}

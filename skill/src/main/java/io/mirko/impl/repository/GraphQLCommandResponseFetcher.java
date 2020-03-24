@@ -20,8 +20,8 @@ public class GraphQLCommandResponseFetcher implements CommandResponseFetcher {
     @Override
     public <T> Optional<T> getCommandResponse(String commandId) {
         Map<String, Object> result = graphqlClient.query(
-            GraphqlQueries.fetchCommandStatus(),
-                Collections.singletonMap("commandId", commandId)
+            GraphqlQueries.fetchCommandResponse(),
+            Collections.singletonMap("commandId", commandId)
         );
         //noinspection unchecked
         result = (Map<String, Object>) result.get("data");
@@ -30,6 +30,13 @@ public class GraphQLCommandResponseFetcher implements CommandResponseFetcher {
         if (result == null) {
             return Optional.empty();
         }
-        return Optional.of((T) result.get("arguments"));
+        final Optional<T> returnValue = Optional.of((T) result.get("arguments"));
+
+        graphqlClient.query(
+            GraphqlQueries.deleteCommand(),
+            Collections.singletonMap("commandId", commandId)
+        );
+
+        return returnValue;
     }
 }

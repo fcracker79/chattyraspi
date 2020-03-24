@@ -1,0 +1,9 @@
+mutation delete($commandId: ID!) {
+  deleteCommand(commandId: $commandId) {
+    commandId
+    deviceId
+    command
+    arguments
+    status
+  }
+}
