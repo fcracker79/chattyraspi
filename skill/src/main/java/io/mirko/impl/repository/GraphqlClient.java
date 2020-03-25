@@ -40,7 +40,9 @@ public class GraphqlClient {
         }
         final InputStream is = (InputStream) response.getEntity();
         try {
-            return (Map<String, Object>) OBJECT_MAPPER.readValue(is, Map.class);
+            Map<String, Object> result = (Map<String, Object>) OBJECT_MAPPER.readValue(is, Map.class);
+            System.out.format("Query %s returned %s", payload, result);
+            return result;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

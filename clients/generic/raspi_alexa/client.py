@@ -9,6 +9,10 @@ import requests
 from raspi_alexa.device import DevicesConfiguration
 
 
+class GraphqlException(Exception):
+    pass
+
+
 # Subscriptions are not supported by Cloudfront. So we have to keep the original URL.
 _ROOT_URL = 'https://c7knkzejobbqpnaz4gskh77nmm.appsync-api.eu-west-1.amazonaws.com/graphql'
 
@@ -59,7 +63,10 @@ class DeviceIdClient:
         response = requests.post(
             _ROOT_URL, json={'query': m, 'variables': v}, headers=self._headers)
         response.raise_for_status()
-        return response.json()
+        response = response.json()
+        if response.get('errors'):
+            raise GraphqlException(response['errors'])
+        return response
 
     def listen(self):
         postHeaders = {
@@ -175,7 +182,7 @@ class DeviceIdClient:
         self._info('Marking command %s as executed', command_id)
         self._mutation(
             '''
-            mutation commandResponded($commandId: ID!, $response: String!) {
+            mutation commandResponded($commandId: ID!, $response: [String]!) {
                   markCommandAsResponded(id: $commandId, response: $response) {
                     commandId
                     command
