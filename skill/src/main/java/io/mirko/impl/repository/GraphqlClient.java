@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Named
@@ -42,6 +43,9 @@ public class GraphqlClient {
         try {
             Map<String, Object> result = (Map<String, Object>) OBJECT_MAPPER.readValue(is, Map.class);
             System.out.format("Query %s returned %s", payload, result);
+            if (result.get("errors") != null) {
+                throw new GraphqlException((List<Map<String, Object>>) result.get("errors"));
+            }
             return result;
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -55,5 +59,13 @@ public class GraphqlClient {
             payload.put("variables", variables);
         }
         return post(payload);
+    }
+
+    public static class GraphqlException extends RuntimeException {
+        public final List<Map<String, Object>> errors;
+        public GraphqlException(List<Map<String, Object>> errors) {
+            super(errors.toString());
+            this.errors = errors;
+        }
     }
 }
