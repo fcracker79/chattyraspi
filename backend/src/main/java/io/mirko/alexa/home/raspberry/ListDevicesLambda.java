@@ -28,9 +28,6 @@ public class ListDevicesLambda implements RequestHandler<Map<String, Object>, Ma
     @RestClient
     AWSProfileService profileService;
 
-    @ConfigProperty(name="io.mirko.alexa.home.raspberry.devices_table.index_by_aws_id")
-    String indexName;
-
     @Override
     public Map<String, Object> handleRequest(Map<String, Object> input, Context context) {
         System.out.format("List devices, handling request input %s, context %s\n", input, context);

@@ -1,6 +1,5 @@
 package io.mirko.alexa.home.raspberry;
 
-import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 

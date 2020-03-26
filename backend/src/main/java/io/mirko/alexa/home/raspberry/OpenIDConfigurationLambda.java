@@ -12,20 +12,6 @@ import java.util.Map;
 
 @Named("openid_configuration")
 public class OpenIDConfigurationLambda implements RequestHandler<Map<String, Object>, Map<String, Object>> {
-    private static byte[] getDataFromClassloader(String resourceName) {
-        try(InputStream is = OpenIDConfigurationLambda.class.getClassLoader().getResourceAsStream(resourceName);) {
-            final byte[] buffer = new byte[32768];
-
-            final ByteArrayOutputStream os = new ByteArrayOutputStream();
-            for (int i = is.read(buffer); i >= 0; i = is.read(buffer)) {
-                os.write(buffer, 0, i);
-            }
-            return os.toByteArray();
-        } catch(IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     @Override
     public Map<String, Object> handleRequest(Map<String, Object> input, Context context) {
         HashMap<String, Object> result = new HashMap<>();
@@ -33,7 +19,7 @@ public class OpenIDConfigurationLambda implements RequestHandler<Map<String, Obj
         result.put("statusCode", 200);
 
         final String strOpenIDConfiguration =
-                new String(getDataFromClassloader("io/mirko/openid_configuration.json"));
+                new String(Utils.getDataFromClassloader("io/mirko/openid_configuration.json"));
         result.put(
                 "body",
                 strOpenIDConfiguration.replaceAll(

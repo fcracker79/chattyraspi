@@ -1,0 +1,6 @@
+Devices:
+#foreach( $device in $devices )
+  - amazon_user_id: $account_id
+    device_id: $device.device_id
+    openid_token: $device.openid_token
+#end
