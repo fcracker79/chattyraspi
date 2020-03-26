@@ -5,6 +5,12 @@
     },
     {
       "pattern": ".*\\.json$"
+    },
+    {
+      "pattern": ".*\\.yaml$"
+    },
+    {
+      "pattern": ".*\\.properties$"
     }
   ]
 }
