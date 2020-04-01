@@ -4,7 +4,6 @@ from logging.config import fileConfig
 import click
 import typing
 
-from raspi_alexa import server
 from raspi_alexa.client import Client
 from raspi_alexa.device import get_machine_id, DevicesConfiguration
 import socket

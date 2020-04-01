@@ -1,7 +1,4 @@
-aiohttp==3.6.2
-aiohttp_jinja2==1.2.0
 cchardet==2.1.5
-aiodns==2.0.0
 click==7.0
 PyYAML==5.3
 requests==2.23.0
