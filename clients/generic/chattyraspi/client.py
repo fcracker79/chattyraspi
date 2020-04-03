@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 
 import paho.mqtt.client as mqtt
 import requests
-from raspi_alexa.device import DevicesConfiguration
+from chattyraspi.device import DevicesConfiguration
 
 
 class GraphqlException(Exception):

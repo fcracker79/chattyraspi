@@ -10,9 +10,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Named("lambda_entry_point")
 public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<String, Object>, Map<String, Object>> {
@@ -102,8 +100,8 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
                         getFromMap(request, "directive.header.correlationToken").orElseThrow(RuntimeException::new);
                 AlexaResponse ar = new AlexaResponse("Alexa", responseName, endpointId, token, correlationToken);
                 if (powerState == null) {
-                    powerState = "ON".equals(commandResponseFetcher.getCommandResponse(commandId).orElse(null)) ?
-                            "ON" : "OFF";
+                    final Optional<List<String>> commandResponse = commandResponseFetcher.getCommandResponse(commandId);
+                    powerState = commandResponse.orElse(Collections.emptyList()).contains("ON") ? "ON" : "OFF";
                 }
                 ar.AddContextProperty("Alexa.PowerController", "powerState", powerState, 200);
                 return toMap(ar);

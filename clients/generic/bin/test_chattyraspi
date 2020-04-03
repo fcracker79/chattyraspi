@@ -4,9 +4,8 @@ from logging.config import fileConfig
 import click
 import typing
 
-from raspi_alexa.client import Client
-from raspi_alexa.device import get_machine_id, DevicesConfiguration
-import socket
+from chattyraspi.client import Client
+from chattyraspi.device import DevicesConfiguration
 
 
 @click.command()
@@ -35,6 +34,7 @@ def test_devices(
         print('Device {} requested power status'.format(device_id))
         status = statuses[device_id]
         print('Returning', status)
+        return status
 
     for device_id in map(lambda d: d['device_id'], config.get_configuration()['Devices']):
         statuses[device_id] = False
