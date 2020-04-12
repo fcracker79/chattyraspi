@@ -4,6 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mirko.alexa.home.raspberry.impl.AWSProfile;
 import io.mirko.alexa.home.raspberry.impl.AWSProfileService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -25,6 +26,9 @@ public class DeleteDeviceLambda implements RequestHandler<Map<String, Object>, M
     @RestClient
     AWSProfileService profileService;
 
+    @Inject
+    UserRepository userRepository;
+
     @ConfigProperty(name="io.mirko.alexa.home.raspberry.devices_table.index_by_aws_id")
     String indexName;
 
@@ -40,7 +44,9 @@ public class DeleteDeviceLambda implements RequestHandler<Map<String, Object>, M
             final String accountId;
 
             try {
-                accountId = profileService.getProfile(accessToken).user_id;
+                AWSProfile profile = profileService.getProfile(accessToken);
+                accountId = profile.user_id;
+                userRepository.saveUser(profile);
             } catch (WebApplicationException e) {
                 System.err.println("Could not access account id from token");
                 e.printStackTrace();

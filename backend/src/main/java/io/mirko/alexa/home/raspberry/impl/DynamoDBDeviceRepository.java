@@ -4,6 +4,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.*;
 import io.mirko.alexa.home.raspberry.Device;
 import io.mirko.alexa.home.raspberry.DeviceRepository;
+import io.mirko.alexa.home.raspberry.UserRepository;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
@@ -32,12 +33,17 @@ public class DynamoDBDeviceRepository implements DeviceRepository {
     @RestClient
     AWSProfileService awsProfileService;
 
+    @Inject
+    UserRepository userRepository;
+
     @Override
     public void registerDevice(String deviceId, String accessToken) {
         final Map<String, AttributeValue> row = new HashMap<>();
         row.put("device_id", new AttributeValue(deviceId));
         // e.g. {"user_id":"amzn1.account.AE...RQ","name":"John Burns","email":"john@burns.com"}'
-        row.put("aws_id", new AttributeValue(awsProfileService.getProfile(accessToken).user_id));
+        AWSProfile profile = awsProfileService.getProfile(accessToken);
+        userRepository.saveUser(profile);
+        row.put("aws_id", new AttributeValue(profile.user_id));
         dynamoDB.putItem(devicesTable, row);
     }
 

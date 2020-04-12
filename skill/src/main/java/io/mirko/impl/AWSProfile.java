@@ -6,4 +6,12 @@ public class AWSProfile {
     public String email;
 
 
+    @Override
+    public String toString() {
+        return "AWSProfile{" +
+                "user_id='" + user_id + '\'' +
+                ", name='" + name + '\'' +
+                ", email='" + email + '\'' +
+                '}';
+    }
 }

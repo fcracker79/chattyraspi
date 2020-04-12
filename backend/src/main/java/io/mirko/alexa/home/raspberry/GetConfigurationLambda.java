@@ -2,6 +2,7 @@ package io.mirko.alexa.home.raspberry;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
+import io.mirko.alexa.home.raspberry.impl.AWSProfile;
 import io.mirko.alexa.home.raspberry.impl.AWSProfileService;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -26,6 +27,9 @@ public class GetConfigurationLambda implements RequestHandler<Map<String, Object
     @Inject
     @RestClient
     AWSProfileService profileService;
+
+    @Inject
+    UserRepository userRepository;
 
     @Inject
     JWTTokenGenerator tokenGenerator;
@@ -54,7 +58,9 @@ public class GetConfigurationLambda implements RequestHandler<Map<String, Object
         HashMap<String, Object> responseBody = new HashMap<>();
 
         if (accessToken != null) {
-            final String accountId = profileService.getProfile(accessToken).user_id;
+            AWSProfile profile = profileService.getProfile(accessToken);
+            final String accountId = profile.user_id;
+            userRepository.saveUser(profile);
             responseBody.put("result", "success");
             final Iterator<Map<String, Object>> devices =
                     StreamSupport

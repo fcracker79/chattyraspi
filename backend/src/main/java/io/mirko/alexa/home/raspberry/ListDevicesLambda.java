@@ -5,6 +5,7 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mirko.alexa.home.raspberry.exceptions.UnauthorizedException;
+import io.mirko.alexa.home.raspberry.impl.AWSProfile;
 import io.mirko.alexa.home.raspberry.impl.AWSProfileService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -28,6 +29,9 @@ public class ListDevicesLambda implements RequestHandler<Map<String, Object>, Ma
     @RestClient
     AWSProfileService profileService;
 
+    @Inject
+    UserRepository userRepository;
+
     @Override
     public Map<String, Object> handleRequest(Map<String, Object> input, Context context) {
         System.out.format("List devices, handling request input %s, context %s\n", input, context);
@@ -41,7 +45,9 @@ public class ListDevicesLambda implements RequestHandler<Map<String, Object>, Ma
 
         if (accessToken != null) {
             responseBody.put("result", "success");
-            final Iterable<Device> devices = deviceRepository.getDevices(profileService.getProfile(accessToken).user_id);
+            AWSProfile profile = profileService.getProfile(accessToken);
+            final Iterable<Device> devices = deviceRepository.getDevices(profile.user_id);
+            userRepository.saveUser(profile);
             responseBody.put(
                     "devices",
                     StreamSupport.stream(devices.spliterator(), false).map(

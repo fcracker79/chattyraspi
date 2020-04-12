@@ -4,6 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mirko.alexa.home.raspberry.impl.AWSProfile;
 import io.mirko.alexa.home.raspberry.impl.AWSProfileService;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
@@ -29,6 +30,9 @@ public class AuthenticationLambda implements RequestHandler<Map<String, Object>,
     @RestClient
     AWSProfileService profileService;
 
+    @Inject
+    UserRepository userRepository;
+
     @Override
     public Map<String, Object> handleRequest(Map<String, Object> input, Context context) {
         final Map<String, Object> body;
@@ -43,7 +47,10 @@ public class AuthenticationLambda implements RequestHandler<Map<String, Object>,
         }
         final String deviceId = (String) body.get("device_id");
         final String accessToken = (String) body.get("access_token");
-        final String userId = profileService.getProfile(accessToken).user_id;
+        final AWSProfile profile = profileService.getProfile(accessToken);
+        userRepository.saveUser(profile);
+        final String userId = profile.user_id;
+
         final int statusCode;
         if (!deviceRepository.existsDevice(deviceId)) {
             statusCode = 200;

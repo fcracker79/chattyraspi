@@ -3,6 +3,7 @@ package io.mirko.lambda;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mirko.impl.AWSProfile;
 import io.mirko.impl.AWSProfileService;
 import io.mirko.repository.*;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -19,6 +20,9 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
 
     @Inject
     DevicesFetcher devicesFetcher;
+
+    @Inject
+    UserRepository userRepository;
 
     @Inject
     @RestClient
@@ -117,9 +121,11 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
     }
 
     private Map<String, Object> discovery(Map<String, Object> request) {
-        final String accountId = profileService.getProfile(
+        AWSProfile profile = profileService.getProfile(
                 (String) getFromMap(request, "directive.payload.scope.token").orElseThrow(RuntimeException::new)
-        ).user_id;
+        );
+        userRepository.saveUser(profile);
+        final String accountId = profile.user_id;
 
         System.out.println("Found Alexa.Discovery Namespace");
         AlexaResponse ar = new AlexaResponse("Alexa.Discovery", "Discover.Response");
