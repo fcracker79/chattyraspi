@@ -13,6 +13,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -88,7 +89,7 @@ public class DynamoDBDeviceRepository implements DeviceRepository {
 
 
     @Override
-    public Iterable<Device> getDevices(String accountId) {
+    public List<Device> getDevices(String accountId) {
         final QueryRequest spec = new QueryRequest()
                 .withTableName(devicesTable).withIndexName(indexName)
                 .withKeyConditionExpression("#aws_id = :aws_id")

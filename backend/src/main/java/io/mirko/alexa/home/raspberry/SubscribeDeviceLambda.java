@@ -5,6 +5,8 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mirko.alexa.home.raspberry.exceptions.UnauthorizedException;
+import io.mirko.alexa.home.raspberry.impl.AWSProfileService;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -21,6 +23,9 @@ public class SubscribeDeviceLambda implements RequestHandler<Map<String, Object>
 
     @Inject
     DeviceRepository deviceRepository;
+
+    @Inject
+    DeviceCreationPolicy deviceCreationPolicy;
 
     @Override
     public Map<String, Object> handleRequest(Map<String, Object> input, Context context) {
@@ -39,15 +44,22 @@ public class SubscribeDeviceLambda implements RequestHandler<Map<String, Object>
         String accessToken = (String) body.get("access_token");;
         String deviceId = (String) body.get("device_id");
         System.out.format("Registering device %s, access token %s", deviceId, accessToken);
+        final HashMap<String, Object> responseBody = new HashMap<>();
         try {
-            deviceRepository.registerDevice(deviceId, accessToken);
+            if (deviceCreationPolicy.canCreateNewDevice(accessToken)) {
+                deviceRepository.registerDevice(deviceId, accessToken);
+                responseBody.put("result", "success");
+                responseBody.put("data", tokenGenerator.generateToken(deviceId));
+            } else {
+                result.put("statusCode", 403);
+                responseBody.put("result", "failure");
+                responseBody.put("data", "TOO_MANY_DEVICES");
+            }
         } catch(UnauthorizedException e) {
             System.err.println("Error attempting to use accessToken. We will hide the issue for security reasons");
-            e.printStackTrace();
+            throw e;
         }
-        HashMap<String, Object> responseBody = new HashMap<>();
-        responseBody.put("result", "success");
-        responseBody.put("data", tokenGenerator.generateToken(deviceId));
+
         try {
             result.put("body", MAPPER.writeValueAsString(responseBody));
         } catch (JsonProcessingException e) {
