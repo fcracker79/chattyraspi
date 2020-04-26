@@ -1,4 +1,4 @@
-![ChattyRaspi](https://www.mirko.io/assets/img/portfolio/chattyraspi.png | width=250)
+![ChattyRaspi](https://www.mirko.io/assets/img/portfolio/chattyraspi_100x100.png)
 
 ChattyRaspi
 ===========
