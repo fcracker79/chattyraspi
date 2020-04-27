@@ -5,14 +5,13 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mirko.alexa.home.raspberry.exceptions.UnauthorizedException;
-import io.mirko.alexa.home.raspberry.impl.AWSProfileService;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Named("subscribe")
 public class SubscribeDeviceLambda implements RequestHandler<Map<String, Object>, Map<String, Object>> {
@@ -42,12 +41,12 @@ public class SubscribeDeviceLambda implements RequestHandler<Map<String, Object>
             throw new RuntimeException(e);
         }
         String accessToken = (String) body.get("access_token");;
-        String deviceId = (String) body.get("device_id");
-        System.out.format("Registering device %s, access token %s", deviceId, accessToken);
+        String deviceName = (String) body.get("device_name");
+        System.out.format("Registering device %s, access token %s", deviceName, accessToken);
         final HashMap<String, Object> responseBody = new HashMap<>();
         try {
             if (deviceCreationPolicy.canCreateNewDevice(accessToken)) {
-                deviceRepository.registerDevice(deviceId, accessToken);
+                final UUID deviceId =deviceRepository.registerDevice(deviceName, accessToken);
                 responseBody.put("result", "success");
                 responseBody.put("data", tokenGenerator.generateToken(deviceId));
             } else {

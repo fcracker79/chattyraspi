@@ -67,7 +67,8 @@ public class GetConfigurationLambda implements RequestHandler<Map<String, Object
                         .stream(deviceRepository.getDevices(accountId).spliterator(), false)
                         .map(device -> {
                             final Map<String, Object> deviceMap = new HashMap<>();
-                            deviceMap.put("device_id", device.deviceId);
+                            deviceMap.put("device_id", device.deviceId.toString());
+                            deviceMap.put("device_name", device.deviceName);
                             deviceMap.put("openid_token", tokenGenerator.generateToken(device.deviceId));
                             return deviceMap;
                         })

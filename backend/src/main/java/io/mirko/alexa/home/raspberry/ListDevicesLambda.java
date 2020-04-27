@@ -53,7 +53,8 @@ public class ListDevicesLambda implements RequestHandler<Map<String, Object>, Ma
                     StreamSupport.stream(devices.spliterator(), false).map(
                             device -> {
                                 final Map<String, Object> deviceMap = new HashMap<>();
-                                deviceMap.put("deviceId", device.deviceId);
+                                deviceMap.put("deviceId", device.deviceId.toString());
+                                deviceMap.put("deviceName", device.deviceName);
                                 return deviceMap;
                             }
                     ).collect(Collectors.toList())

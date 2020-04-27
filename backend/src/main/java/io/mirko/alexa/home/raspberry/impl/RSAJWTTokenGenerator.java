@@ -24,11 +24,11 @@ public class RSAJWTTokenGenerator implements JWTTokenGenerator {
     RSAPrivateCrtKey rsaKey;
 
     @Override
-    public String generateToken(String deviceId) {
+    public String generateToken(UUID deviceId) {
         final Map headers = Jwts.jwsHeader().setKeyId("io.mirko.raspberry").setAlgorithm("RS256");
         return Jwts.builder().setId(UUID.randomUUID().toString())
                 .setIssuedAt(new Date())
-                .setSubject(deviceId)
+                .setSubject(deviceId.toString())
                 .setHeader(headers)
                 .setIssuer("raspberry.alexa.mirko.io")
                 .setExpiration(new Date(System.currentTimeMillis() + durationSeconds * 1000))

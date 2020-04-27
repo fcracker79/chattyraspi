@@ -14,6 +14,7 @@ import javax.inject.Named;
 import javax.ws.rs.WebApplicationException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Named("deleteDevice")
 public class DeleteDeviceLambda implements RequestHandler<Map<String, Object>, Map<String, Object>> {
@@ -61,7 +62,7 @@ public class DeleteDeviceLambda implements RequestHandler<Map<String, Object>, M
                 throw new RuntimeException(e);
             }
             final String deviceId = (String) ((Map<String, Object>) input.get("pathParameters")).get("deviceId");
-            if (!deviceRepository.deleteDevice(deviceId, accountId)) {
+            if (!deviceRepository.deleteDevice(UUID.fromString(deviceId), accountId)) {
                 result.put("statusCode", 404);
             }
         } else {

@@ -11,10 +11,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -38,44 +35,23 @@ public class DynamoDBDeviceRepository implements DeviceRepository {
     UserRepository userRepository;
 
     @Override
-    public void registerDevice(String deviceId, String accessToken) {
+    public UUID registerDevice(String deviceName, String accessToken) {
         final Map<String, AttributeValue> row = new HashMap<>();
-        row.put("device_id", new AttributeValue(deviceId));
+        final UUID deviceId = UUID.randomUUID();
+        row.put("device_id", new AttributeValue(deviceId.toString()));
+        row.put("device_name", new AttributeValue(deviceName));
         // e.g. {"user_id":"amzn1.account.AE...RQ","name":"John Burns","email":"john@burns.com"}'
         AWSProfile profile = awsProfileService.getProfile(accessToken);
         userRepository.saveUser(profile);
         row.put("aws_id", new AttributeValue(profile.user_id));
         dynamoDB.putItem(devicesTable, row);
+        return deviceId;
     }
 
     @Override
-    public boolean isValidDevice(String deviceId, String userId) {
+    public boolean deleteDevice(UUID deviceId, String accountId) {
         final Map<String, AttributeValue> row = new HashMap<>();
-        row.put("device_id", new AttributeValue(deviceId));
-        final GetItemResult result = dynamoDB.getItem(devicesTable, row);
-        if (result == null || result.getItem() == null) {
-            return false;
-        }
-        final Map<String, AttributeValue> item = result.getItem();
-        return item != null && item.get("device_id").getS().equals(deviceId) && item.get("aws_id").getS().equals(userId);
-    }
-
-    @Override
-    public boolean existsDevice(String deviceId) {
-        final Map<String, AttributeValue> row = new HashMap<>();
-        row.put("device_id", new AttributeValue(deviceId));
-        final GetItemResult result = dynamoDB.getItem(devicesTable, row);
-        if (result == null || result.getItem() == null) {
-            return false;
-        }
-        final Map<String, AttributeValue> item = result.getItem();
-        return item != null && item.get("device_id").getS().equals(deviceId);
-    }
-
-    @Override
-    public boolean deleteDevice(String deviceId, String accountId) {
-        final Map<String, AttributeValue> row = new HashMap<>();
-        row.put("device_id", new AttributeValue(deviceId));
+        row.put("device_id", new AttributeValue(deviceId.toString()));
         row.put("aws_id", new AttributeValue(accountId));
 
         try {
@@ -96,6 +72,8 @@ public class DynamoDBDeviceRepository implements DeviceRepository {
                 .withExpressionAttributeNames(Collections.singletonMap("#aws_id", "aws_id"))
                 .withExpressionAttributeValues(Collections.singletonMap(":aws_id", new AttributeValue(accountId)));
         final QueryResult items = dynamoDB.query(spec);
-        return items.getItems().stream().map(m -> new Device(m.get("device_id").getS())).collect(Collectors.toList());
+        return items.getItems().stream().map(
+                m -> new Device(UUID.fromString(m.get("device_id").getS()), m.get("device_name").getS()))
+                .collect(Collectors.toList());
     }
 }

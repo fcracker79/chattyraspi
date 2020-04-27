@@ -1,9 +1,13 @@
 package io.mirko.alexa.home.raspberry;
 
-public final class Device {
-    public final String deviceId;
+import java.util.UUID;
 
-    public Device(String deviceId) {
+public final class Device {
+    public final UUID deviceId;
+    public final String deviceName;
+
+    public Device(UUID deviceId, String deviceName) {
         this.deviceId = deviceId;
+        this.deviceName = deviceName;
     }
 }

@@ -9,6 +9,7 @@ import javax.inject.Named;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 
 @ApplicationScoped
@@ -18,11 +19,11 @@ public class GraphQLCommandSubmitter implements CommandSubmitter {
     GraphqlClient graphqlClient;
 
     @Override
-    public String submitCommand(String deviceId, CommandType command, Object... arguments) {
+    public String submitCommand(UUID deviceId, CommandType command, Object... arguments) {
         final Map<String, Object> newCommand = new HashMap<>();
         newCommand.put("command", command.value());
         newCommand.put("arguments", arguments);
-        newCommand.put("deviceId", deviceId);
+        newCommand.put("deviceId", deviceId.toString());
         Map<String, Object> result = graphqlClient.query(
                 GraphqlQueries.submitCommand(),
                 Collections.singletonMap("command", newCommand)

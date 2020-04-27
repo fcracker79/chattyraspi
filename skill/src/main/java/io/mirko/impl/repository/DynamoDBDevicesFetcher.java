@@ -12,6 +12,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.Collections;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 
@@ -35,6 +36,8 @@ public class DynamoDBDevicesFetcher implements DevicesFetcher {
                 .withExpressionAttributeNames(Collections.singletonMap("#aws_id", "aws_id"))
                 .withExpressionAttributeValues(Collections.singletonMap(":aws_id", new AttributeValue(accountId)));
         final QueryResult items = dynamoDB.query(spec);
-        return items.getItems().stream().map(m -> new Device(m.get("device_id").getS())).collect(Collectors.toList());
+        return items.getItems().stream()
+                .map(m -> new Device(UUID.fromString(m.get("device_id").getS()), m.get("device_name").getS()))
+                .collect(Collectors.toList());
     }
 }

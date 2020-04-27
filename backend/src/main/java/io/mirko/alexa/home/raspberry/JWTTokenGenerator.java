@@ -1,5 +1,7 @@
 package io.mirko.alexa.home.raspberry;
 
+import java.util.UUID;
+
 public interface JWTTokenGenerator {
-    String generateToken(String deviceId);
+    String generateToken(UUID deviceId);
 }

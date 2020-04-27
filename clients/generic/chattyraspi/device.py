@@ -23,7 +23,7 @@ class DevicesConfiguration:
                     self._data = {}
         return self._data
 
-    def add_configuration(self, device_id: str, amazon_user_id: str, openid_token: str) -> None:
+    def add_configuration(self, device_id: str, device_name: str, amazon_user_id: str, openid_token: str) -> None:
         configuration = self.get_configuration()
         devices = configuration.setdefault('Devices', [])
         found_devices = list(filter(lambda d: d['device_id'] == device_id, devices))
@@ -32,7 +32,14 @@ class DevicesConfiguration:
                 raise ValueError('Device %s exists with different AWS id'.format(device_id))
             devices[0]['openid_token'] = openid_token
         else:
-            devices.append({'device_id': device_id, 'amazon_user_id': amazon_user_id, 'openid_token': openid_token})
+            devices.append(
+                {
+                    'device_id': device_id,
+                    'device_name': device_name,
+                    'amazon_user_id': amazon_user_id,
+                    'openid_token': openid_token
+                }
+            )
         self._data = None
         with open(self._filename, 'w') as f:
             yaml.dump(configuration, stream=f)

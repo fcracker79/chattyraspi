@@ -70,30 +70,30 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
         throw new IllegalStateException(String.format("Unexpected request %s", request));
     }
 
-    private String getDeviceId(Map<String, Object> request) {
-        return (String) getFromMap(request, "directive.endpoint.endpointId").orElseThrow(RuntimeException::new);
+    private UUID getDeviceId(Map<String, Object> request) {
+        return UUID.fromString((String) getFromMap(request, "directive.endpoint.endpointId").orElseThrow(RuntimeException::new));
     }
 
-    private Map<String, Object> turnOff(Map<String, Object> request, String deviceId) {
+    private Map<String, Object> turnOff(Map<String, Object> request, UUID deviceId) {
         final String commandId = commandSubmitter.submitCommand(deviceId, CommandType.TURN_OFF);
         return waitForPowerStateControlCompleted(request, commandId, "OFF", deviceId, "Response");
     }
 
-    private Map<String, Object> turnOn(Map<String, Object> request, String deviceId) {
+    private Map<String, Object> turnOn(Map<String, Object> request, UUID deviceId) {
         final String commandId = commandSubmitter.submitCommand(deviceId, CommandType.TURN_ON);
         return waitForPowerStateControlCompleted(request, commandId, "ON", deviceId, "Response");
     }
 
-    private Map<String, Object> stateReport(Map<String, Object> request, String deviceId) {
+    private Map<String, Object> stateReport(Map<String, Object> request, UUID deviceId) {
         final String commandId = commandSubmitter.submitCommand(deviceId, CommandType.POWER_STATUS);
         return waitForPowerStateControlCompleted(request, commandId, null, deviceId, "StateReport");
     }
 
     private Map<String, Object> waitForPowerStateControlCompleted(
             Map<String, Object> request,
-            String commandId, String powerState, String endpointId,
+            String commandId, String powerState, UUID deviceId,
             String responseName) {
-        System.out.format("Waiting for command to be executed, device %s, responseName %s...", endpointId, responseName);
+        System.out.format("Waiting for command to be executed, device %s, responseName %s...", deviceId, responseName);
         for (int i = 0; i < NUM_SECONDS_TO_WAIT_EXECUTION; i++) {
             final CommandStatus currentStatus = commandStatusFetcher.getCommandStatus(commandId);
             System.out.format("Waiting for command to be executed, status %s\n", currentStatus);
@@ -102,7 +102,7 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
                         getFromMap(request, "directive.endpoint.scope.token").orElseThrow(RuntimeException::new);
                 final String correlationToken = (String)
                         getFromMap(request, "directive.header.correlationToken").orElseThrow(RuntimeException::new);
-                AlexaResponse ar = new AlexaResponse("Alexa", responseName, endpointId, token, correlationToken);
+                AlexaResponse ar = new AlexaResponse("Alexa", responseName, deviceId.toString(), token, correlationToken);
                 if (powerState == null) {
                     final Optional<List<String>> commandResponse = commandResponseFetcher.getCommandResponse(commandId);
                     powerState = commandResponse.orElse(Collections.emptyList()).contains("ON") ? "ON" : "OFF";
@@ -139,7 +139,7 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
         String capabilities = "[" + capabilityAlexa + ", " + capabilityAlexaPowerController + "]";
         int i = 1;
         for (Device d : devicesFetcher.getDevices(accountId)) {
-            ar.AddPayloadEndpoint(String.format("Raspberry %s", i), d.deviceId, capabilities);
+            ar.AddPayloadEndpoint(d.deviceName, d.deviceId.toString(), capabilities);
             i += 1;
         }
         return toMap(ar);

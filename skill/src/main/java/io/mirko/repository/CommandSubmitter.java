@@ -1,5 +1,7 @@
 package io.mirko.repository;
 
+import java.util.UUID;
+
 public interface CommandSubmitter {
-    String submitCommand(String deviceId, CommandType command, Object ... arguments);
+    String submitCommand(UUID deviceId, CommandType command, Object ... arguments);
 }
