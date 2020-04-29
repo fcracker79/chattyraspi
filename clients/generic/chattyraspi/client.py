@@ -96,6 +96,8 @@ class DeviceIdClient:
             self._exception('Could not subscribe to device commands, status %s, response %s', r.status_code, r.content)
             raise
         data = r.json()
+        self._logger.info('Subscription response: %s', json.dumps(data, indent=3, sort_keys=True))
+
         # if data.get('errors'):
         #     raise ValueError('Error subscribing: {}'.format(data))
         client_id = data['extensions']['subscription']['mqttConnections'][0]['client']
@@ -120,7 +122,6 @@ class DeviceIdClient:
             command = command_payload['data']['onCommandCreated']['command']
             command_id = command_payload['data']['onCommandCreated']['commandId']
             # noinspection PyBroadException
-
             response_execution = lambda: self._command_executed(command_id)
             try:
                 if command == 'turnOn':
@@ -148,6 +149,7 @@ class DeviceIdClient:
         }
 
         client = mqtt.Client(client_id=client_id, transport="websockets")
+        client.enable_logger(logging.getLogger('paho-mqtt'))
         client.on_connect = on_connect
         client.on_message = on_message
 
