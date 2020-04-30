@@ -152,7 +152,7 @@ class DeviceIdClient:
         client.enable_logger(logging.getLogger('paho-mqtt'))
         client.on_connect = on_connect
         client.on_message = on_message
-
+        client.on_log = lambda *a, **kw: self._logger.info('On log', exc_info=True)
         client.ws_set_options(path="{}?{}".format(urlparts.path, urlparts.query), headers=headers)
         client.tls_set()
 
@@ -160,6 +160,9 @@ class DeviceIdClient:
         client.connect(urlparts.netloc, 443)
         try:
             client.loop_forever()
+        except Exception:
+            self._logger.exception('Error looping forever')
+            raise
         finally:
             client.disconnect()
 
