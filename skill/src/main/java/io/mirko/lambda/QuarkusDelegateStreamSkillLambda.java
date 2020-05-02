@@ -112,7 +112,7 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
             }
             System.out.println("Retrying in 1 second's time");
             try {
-                Thread.sleep(1000L);
+                Thread.sleep(100L);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
