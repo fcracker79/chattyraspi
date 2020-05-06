@@ -93,7 +93,7 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
             Map<String, Object> request,
             String commandId, String powerState, UUID deviceId,
             String responseName) {
-        System.out.format("Waiting for command to be executed, device %s, responseName %s...", deviceId, responseName);
+        System.out.format("Waiting for command to be executed, device %s, responseName %s...\n", deviceId, responseName);
         for (int i = 0; i < NUM_SECONDS_TO_WAIT_EXECUTION; i++) {
             final CommandStatus currentStatus = commandStatusFetcher.getCommandStatus(commandId);
             System.out.format("Waiting for command to be executed, status %s\n", currentStatus);

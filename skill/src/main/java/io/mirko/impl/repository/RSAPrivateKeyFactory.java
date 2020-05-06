@@ -26,7 +26,7 @@ public class RSAPrivateKeyFactory {
                 new GetParameterRequest().withName(System.getenv("SSM_KEY_NAME")).withWithDecryption(true)
         ).getParameter().getValue().replaceAll("\n", "");
         byte[] bRSAKey = Base64.getDecoder().decode(sRSAKey.getBytes());
-        System.out.format("My key is %s bytes long", bRSAKey.length);
+        System.out.format("My key is %s bytes long\n", bRSAKey.length);
         return createFromBytes(bRSAKey);
     }
 

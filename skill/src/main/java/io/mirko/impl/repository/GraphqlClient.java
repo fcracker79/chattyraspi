@@ -42,7 +42,7 @@ public class GraphqlClient {
         final InputStream is = (InputStream) response.getEntity();
         try {
             Map<String, Object> result = (Map<String, Object>) OBJECT_MAPPER.readValue(is, Map.class);
-            System.out.format("Query %s returned %s", payload, result);
+            System.out.format("Query %s returned %s\n", payload, result);
             if (result.get("errors") != null) {
                 throw new GraphqlException((List<Map<String, Object>>) result.get("errors"));
             }
