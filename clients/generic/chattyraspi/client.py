@@ -22,7 +22,7 @@ def _do_nothing(_):
 
 
 class DeviceIdClient:
-    def __init__(self, device_id: str, openid_token: str):
+    def __init__(self, device_id: str, openid_token: str, reconnect_time_seconds: int):
         self._headers = {
             'Authorization': openid_token
         }
@@ -31,28 +31,29 @@ class DeviceIdClient:
         self.on_turn_off = _do_nothing
         self.fetch_is_power_on = _do_nothing
         self._logger = logging.getLogger('client.raspi.alexa.mirko.io')
+        self._reconnect_time_seconds = reconnect_time_seconds
 
     @property
     def device_id(self) -> str:
         return self._device_id
 
     def _info(self, s: str, *args, **kwargs):
-        self._log(self._logger.info, s, *args)
+        self._log(self._logger.info, s, *args, **kwargs)
 
-    def _debug(self, s: str, *args):
-        self._log(self._logger.debug, s, *args)
+    def _debug(self, s: str, *args, **kwargs):
+        self._log(self._logger.debug, s, *args, **kwargs)
 
-    def _warning(self, s: str, *args):
-        self._log(self._logger.warning, s, *args)
+    def _warning(self, s: str, *args, **kwargs):
+        self._log(self._logger.warning, s, *args, **kwargs)
 
-    def _error(self, s: str, *args):
-        self._log(self._logger.error, s, *args)
+    def _error(self, s: str, *args, **kwargs):
+        self._log(self._logger.error, s, *args, **kwargs)
 
-    def _exception(self, s: str, *args):
-        self._log(self._logger.exception, s, *args)
+    def _exception(self, s: str, *args, **kwargs):
+        self._log(self._logger.exception, s, *args, **kwargs)
 
     def _log(self, log_function, s: str, *args, **kwargs):
-        log_function('Device %s: {}'.format(s), self._device_id, *args)
+        log_function('[%s] ' + s, self._device_id, *args, **kwargs)
 
     def _query(self, q: str):
         response = requests.post(_ROOT_URL, json={'query': q}, headers=self._headers)
@@ -69,7 +70,12 @@ class DeviceIdClient:
         return response
 
     def listen(self):
-        postHeaders = {
+        while True:
+            self._listen()
+
+    def _listen(self):
+        self._info('Initializing client')
+        post_headers = {
             'Content-Type': 'application/json',
             **self._headers
         }
@@ -89,14 +95,14 @@ class DeviceIdClient:
             "variables": {"deviceId": self._device_id}
         }
 
-        r = requests.post(_ROOT_URL, headers=postHeaders, json=payload)
+        r = requests.post(_ROOT_URL, headers=post_headers, json=payload)
         try:
             r.raise_for_status()
         except Exception:
             self._exception('Could not subscribe to device commands, status %s, response %s', r.status_code, r.content)
             raise
         data = r.json()
-        self._logger.info('Subscription response: %s', json.dumps(data, indent=3, sort_keys=True))
+        self._debug('Subscription response: %s', json.dumps(data, indent=3, sort_keys=True))
 
         # if data.get('errors'):
         #     raise ValueError('Error subscribing: {}'.format(data))
@@ -121,8 +127,10 @@ class DeviceIdClient:
             command_payload = json.loads(msg.payload.decode())
             command = command_payload['data']['onCommandCreated']['command']
             command_id = command_payload['data']['onCommandCreated']['commandId']
-            # noinspection PyBroadException
+
             response_execution = lambda: self._command_executed(command_id)
+
+            # noinspection PyBroadException
             try:
                 if command == 'turnOn':
                     self.on_turn_on(self._device_id)
@@ -152,19 +160,25 @@ class DeviceIdClient:
         client.enable_logger(logging.getLogger('paho-mqtt'))
         client.on_connect = on_connect
         client.on_message = on_message
-        client.on_log = lambda *a, **kw: self._logger.info('On log', exc_info=True)
+        client.on_log = lambda *a, **kw: self._info('On log(%s, %s)', a, kw, exc_info=True)
         client.ws_set_options(path="{}?{}".format(urlparts.path, urlparts.query), headers=headers)
         client.tls_set()
 
-        self._debug('trying to connect now....')
+        self._debug('Trying to connect now....')
         client.connect(urlparts.netloc, 443)
         try:
-            client.loop_forever()
+            self._debug('Start looping. We will reconnect after %s seconds', self._reconnect_time_seconds)
+            client.loop_start()
+            time.sleep(self._reconnect_time_seconds)
+            self._debug('Timeout expiring')
+            client.loop_stop(force=True)
         except Exception:
-            self._logger.exception('Error looping forever')
+            self._exception('Error looping forever')
             raise
         finally:
+            self._debug('Disconnecting')
             client.disconnect()
+            del client
 
     def _command_executed(self, command_id: str):
         self._info('Marking command %s as executed', command_id)
@@ -220,9 +234,13 @@ class DeviceIdClient:
 
 
 class Client:
-    def __init__(self, configuration: DevicesConfiguration):
+    _SECONDS = 1
+    _MINUTES = 60 * _SECONDS
+    _HOURS = 60 * _MINUTES
+
+    def __init__(self, configuration: DevicesConfiguration, reconnect_time_seconds: int = 12 * _HOURS):
         self._clients_by_device_id = {
-            conf['device_id']: DeviceIdClient(conf['device_id'], conf['openid_token'])
+            conf['device_id']: DeviceIdClient(conf['device_id'], conf['openid_token'], reconnect_time_seconds)
             for conf in configuration.get_configuration()['Devices']
         }
         self._logger = logging.getLogger('client.raspi.alexa.mirko.io')
