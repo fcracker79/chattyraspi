@@ -22,9 +22,11 @@ public class RSAPrivateKeyFactory {
     @ApplicationScoped
     @Named
     public RSAPrivateCrtKey create() {
+        System.out.println("Creating RSA Private key");
         String sRSAKey = client.getParameter(
                 new GetParameterRequest().withName(System.getenv("SSM_KEY_NAME")).withWithDecryption(true)
         ).getParameter().getValue().replaceAll("\n", "");
+        System.out.println("Creating RSA Private key, SSM key extraction complete");
         byte[] bRSAKey = Base64.getDecoder().decode(sRSAKey.getBytes());
         System.out.format("My key is %s bytes long\n", bRSAKey.length);
         return createFromBytes(bRSAKey);
