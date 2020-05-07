@@ -18,10 +18,14 @@ public class RSAJWTTokenGenerator {
     @Inject
     RSAPrivateCrtKey rsaKey;
 
+    private String cachedJwtToken = null;
     public String generateToken() {
+        if (cachedJwtToken != null) {
+            return cachedJwtToken;
+        }
         System.out.println("Generating JWT Token");
         final Map headers = Jwts.jwsHeader().setKeyId("io.mirko.raspberry").setAlgorithm("RS256");
-        final String jwtToken = Jwts.builder().setId(UUID.randomUUID().toString())
+        cachedJwtToken = Jwts.builder().setId(UUID.randomUUID().toString())
                 .setIssuedAt(new Date())
                 .setSubject("admin")
                 .setHeader(headers)
@@ -30,6 +34,6 @@ public class RSAJWTTokenGenerator {
                 .signWith(SignatureAlgorithm.RS256, rsaKey)
                 .compact();
         System.out.println("JWT Token generation successful");
-        return jwtToken;
+        return cachedJwtToken;
     }
 }
