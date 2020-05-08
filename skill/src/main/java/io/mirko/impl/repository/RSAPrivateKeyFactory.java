@@ -3,6 +3,8 @@ package io.mirko.impl.repository;
 import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagement;
 import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagementClientBuilder;
 import com.amazonaws.services.simplesystemsmanagement.model.GetParameterRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
@@ -14,7 +16,10 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
 
+@SuppressWarnings("unused")
 public class RSAPrivateKeyFactory {
+    private final Logger logger = LoggerFactory.getLogger(RSAPrivateKeyFactory.class);
+
     private final AWSSimpleSystemsManagement client =
             AWSSimpleSystemsManagementClientBuilder.defaultClient();
 
@@ -22,13 +27,13 @@ public class RSAPrivateKeyFactory {
     @ApplicationScoped
     @Named
     public RSAPrivateCrtKey create() {
-        System.out.println("Creating RSA Private key");
+        logger.debug("Creating RSA Private key");
         String sRSAKey = client.getParameter(
                 new GetParameterRequest().withName(System.getenv("SSM_KEY_NAME")).withWithDecryption(true)
         ).getParameter().getValue().replaceAll("\n", "");
-        System.out.println("Creating RSA Private key, SSM key extraction complete");
+        logger.debug("Creating RSA Private key, SSM key extraction complete");
         byte[] bRSAKey = Base64.getDecoder().decode(sRSAKey.getBytes());
-        System.out.format("My key is %s bytes long\n", bRSAKey.length);
+        logger.debug("My key is {} bytes long", bRSAKey.length);
         return createFromBytes(bRSAKey);
     }
 

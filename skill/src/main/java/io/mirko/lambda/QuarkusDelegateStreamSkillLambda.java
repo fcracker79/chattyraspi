@@ -7,6 +7,8 @@ import io.mirko.impl.AWSProfile;
 import io.mirko.impl.AWSProfileService;
 import io.mirko.repository.*;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -17,6 +19,8 @@ import java.util.*;
 public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<String, Object>, Map<String, Object>> {
     private static final int NUM_SECONDS_TO_WAIT_EXECUTION = 15;
     private static final ObjectMapper JSON_OBJECT_MAPPER = new ObjectMapper();
+
+    private final Logger logger = LoggerFactory.getLogger(QuarkusDelegateStreamSkillLambda.class);
 
     @Inject
     DevicesFetcher devicesFetcher;
@@ -39,7 +43,7 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
 
     @Override
     public Map<String, Object> handleRequest(Map<String, Object> request, Context context) {
-        System.out.format("************ Handling request %s\n", request);
+        logger.info("************ Handling request {}", request);
 
         if (request.containsKey("directive")) {
             return manageDirective(request, context);
@@ -93,10 +97,10 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
             Map<String, Object> request,
             String commandId, String powerState, UUID deviceId,
             String responseName) {
-        System.out.format("Waiting for command to be executed, device %s, responseName %s...\n", deviceId, responseName);
+        logger.info("Waiting for command to be executed, device {}, responseName {}...", deviceId, responseName);
         for (int i = 0; i < NUM_SECONDS_TO_WAIT_EXECUTION; i++) {
             final CommandStatus currentStatus = commandStatusFetcher.getCommandStatus(commandId);
-            System.out.format("Waiting for command to be executed, status %s\n", currentStatus);
+            logger.debug("Waiting for command to be executed, status {}", currentStatus);
             if (currentStatus == CommandStatus.NOT_FOUND || currentStatus == CommandStatus.RESPONDED) {
                 final String token = (String)
                         getFromMap(request, "directive.endpoint.scope.token").orElseThrow(RuntimeException::new);
@@ -110,7 +114,7 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
                 ar.AddContextProperty("Alexa.PowerController", "powerState", powerState, 200);
                 return toMap(ar);
             }
-            System.out.println("Retrying in 1 second's time");
+            logger.debug("Retrying in 100 msecs' time");
             try {
                 Thread.sleep(100L);
             } catch (InterruptedException e) {
@@ -127,7 +131,7 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
         userRepository.saveUser(profile);
         final String accountId = profile.user_id;
 
-        System.out.println("Found Alexa.Discovery Namespace");
+        logger.debug("Found Alexa.Discovery Namespace");
         AlexaResponse ar = new AlexaResponse("Alexa.Discovery", "Discover.Response");
         String capabilityAlexa = ar.CreatePayloadEndpointCapability(
                 "AlexaInterface", "Alexa", "3", null
@@ -148,7 +152,7 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
     private Map<String, Object> toMap(AlexaResponse ar) {
         final String strResponse = ar.toString();
         try {
-            System.out.format("Response: %s\n", strResponse);
+            logger.info("Response: {}", strResponse);
             //noinspection unchecked
             return JSON_OBJECT_MAPPER.readValue(strResponse, Map.class);
         } catch (IOException e) {

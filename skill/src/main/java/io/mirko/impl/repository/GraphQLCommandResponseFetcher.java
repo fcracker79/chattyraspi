@@ -1,8 +1,8 @@
 package io.mirko.impl.repository;
 
 import io.mirko.repository.CommandResponseFetcher;
-import io.mirko.repository.CommandStatus;
-import io.mirko.repository.CommandStatusFetcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -15,6 +15,8 @@ import java.util.Optional;
 @ApplicationScoped
 @Named
 public class GraphQLCommandResponseFetcher implements CommandResponseFetcher {
+    private final Logger logger = LoggerFactory.getLogger(GraphQLCommandResponseFetcher.class);
+
     @Inject
     GraphqlClient graphqlClient;
 
@@ -28,16 +30,16 @@ public class GraphQLCommandResponseFetcher implements CommandResponseFetcher {
         result = (Map<String, Object>) result.get("data");
         //noinspection unchecked
         result = (Map<String, Object>) result.get("getCommand");
-        System.out.format("getCommand for commant %s, response: %s\n", commandId, result);
+        logger.debug("getCommand for commant {}, response: {}", commandId, result);
         if (result == null) {
             return Optional.empty();
         }
         final Optional<List<T>> returnValue = Optional.of((List<T>) result.get("arguments"));
 
-        List<T> t = returnValue.orElse(null);
-        System.out.format(
-                "getCommand for command %s, arguments: %s (%s)\n",
-                commandId, t, t == null ? "<NULL>" : t.getClass().getName()
+        logger.debug(
+                "getCommand for command {}, arguments: {} ({})",
+                commandId, result,
+                returnValue.map(d -> d.getClass().getName()).orElse("<NULL>")
         );
         graphqlClient.query(
             GraphqlQueries.deleteCommand(),

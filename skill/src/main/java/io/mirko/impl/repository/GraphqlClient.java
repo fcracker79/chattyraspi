@@ -3,6 +3,8 @@ package io.mirko.impl.repository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.resteasy.client.jaxrs.internal.ResteasyClientBuilderImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
@@ -21,6 +23,8 @@ import java.util.Map;
 @Named
 @ApplicationScoped
 public class GraphqlClient {
+    private final Logger logger = LoggerFactory.getLogger(GraphqlClient.class);
+
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private Invocation.Builder client;
     @ConfigProperty(name="io.mirko.alexa.home.raspberry.graphql_uri")
@@ -37,7 +41,7 @@ public class GraphqlClient {
     }
 
     private Map<String, Object> post(Map<String, Object> payload) {
-        System.out.format("Query %s execution\n", payload);
+        logger.debug("Query {} execution", payload);
         final Response response = client.post(Entity.entity(payload, MediaType.APPLICATION_JSON));
         if (200 != response.getStatus()) {
             // TODO specialize exceptions
@@ -45,11 +49,11 @@ public class GraphqlClient {
                     String.format("Status %s: %s", response.getStatus(), response.getEntity())
             );
         }
-        System.out.format("Query execution successful\n", payload);
+        logger.debug("Query execution successful {}", payload);
         final InputStream is = (InputStream) response.getEntity();
         try {
             Map<String, Object> result = (Map<String, Object>) OBJECT_MAPPER.readValue(is, Map.class);
-            System.out.format("Query returned %s\n", result);
+            logger.debug("Query returned {}", result);
             if (result.get("errors") != null) {
                 throw new GraphqlException((List<Map<String, Object>>) result.get("errors"));
             }
