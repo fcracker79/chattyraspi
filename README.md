@@ -34,8 +34,7 @@ Since there is only a Python client, all you need is to install [Chattyraspi](ht
 Install the skill in your Alexa device
 --------------------------------------
 
-Well, this is the most annoying part: I am currently working to have the skill certified by Amazon, which is pretty tricky.
-As soon as it is certified, you wil just need to add that skill to your Alexa and bind it to your Amazon account.
+The simplest way to install the skill in your Alexa device is to [find](https://www.amazon.it/dp/B088FFGXRT/ref=sr_1_6?dchild=1&fst=as%3Aoff&qid=1589261022&refinements=p_n_date%3A14103244031&rnid=14103242031&s=digital-skills&sr=1-6) and activate it from your Alexa Smartphone app.
 
 Alternatively, I might include you into the beta testers list, which entitles you into installing that skill, at least for some months (Amazon automatically removes beta testers after a while). Please contact me if you want to proceed to this direction.
 
