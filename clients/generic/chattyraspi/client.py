@@ -15,6 +15,7 @@ class GraphqlException(Exception):
 
 # Subscriptions are not supported by Cloudfront. So we have to keep the original URL.
 _ROOT_URL = 'https://c7knkzejobbqpnaz4gskh77nmm.appsync-api.eu-west-1.amazonaws.com/graphql'
+_DEV_ROOT_URL = 'https://dnbcs5up6jcyro7ejt3xgc4zbu.appsync-api.eu-west-1.amazonaws.com/graphql'
 
 
 def _do_nothing(_):
@@ -22,7 +23,7 @@ def _do_nothing(_):
 
 
 class DeviceIdClient:
-    def __init__(self, device_id: str, openid_token: str, reconnect_time_seconds: int):
+    def __init__(self, device_id: str, openid_token: str, reconnect_time_seconds: int, appsync_url: str):
         self._headers = {
             'Authorization': openid_token
         }
@@ -32,6 +33,7 @@ class DeviceIdClient:
         self.fetch_is_power_on = _do_nothing
         self._logger = logging.getLogger('client.raspi.alexa.mirko.io')
         self._reconnect_time_seconds = reconnect_time_seconds
+        self._appsync_url = appsync_url
 
     @property
     def device_id(self) -> str:
@@ -238,9 +240,15 @@ class Client:
     _MINUTES = 60 * _SECONDS
     _HOURS = 60 * _MINUTES
 
-    def __init__(self, configuration: DevicesConfiguration, reconnect_time_seconds: int = 12 * _HOURS):
+    def __init__(
+            self, configuration: DevicesConfiguration, reconnect_time_seconds: int = 12 * _HOURS,
+            dev_environment: bool = False
+    ):
+        appsync_url = _DEV_ROOT_URL if dev_environment else _ROOT_URL
         self._clients_by_device_id = {
-            conf['device_id']: DeviceIdClient(conf['device_id'], conf['openid_token'], reconnect_time_seconds)
+            conf['device_id']: DeviceIdClient(
+                conf['device_id'], conf['openid_token'], reconnect_time_seconds,
+                appsync_url)
             for conf in configuration.get_configuration()['Devices']
         }
         self._logger = logging.getLogger('client.raspi.alexa.mirko.io')
