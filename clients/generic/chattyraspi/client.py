@@ -1,3 +1,4 @@
+import enum
 import json
 import logging
 import time
@@ -22,6 +23,13 @@ def _do_nothing(_):
     pass
 
 
+@enum.unique
+class ThermostatMode(enum.Enum):
+    HEAT = 'HEAT'
+    COOL = 'COOL'
+    AUTO = 'AUTO'
+
+
 class DeviceIdClient:
     def __init__(self, device_id: str, openid_token: str, reconnect_time_seconds: int, appsync_url: str):
         self._headers = {
@@ -31,6 +39,9 @@ class DeviceIdClient:
         self.on_turn_on = _do_nothing
         self.on_turn_off = _do_nothing
         self.fetch_is_power_on = _do_nothing
+        self.fetch_temperature = _do_nothing
+        self.fetch_thermostat_mode = _do_nothing
+        self.fetch_thermostat_target_setpoint = _do_nothing
         self._logger = logging.getLogger('client.raspi.alexa.mirko.io')
         self._reconnect_time_seconds = reconnect_time_seconds
         self._appsync_url = appsync_url
@@ -58,13 +69,13 @@ class DeviceIdClient:
         log_function('[%s] ' + s, self._device_id, *args, **kwargs)
 
     def _query(self, q: str):
-        response = requests.post(_ROOT_URL, json={'query': q}, headers=self._headers)
+        response = requests.post(self._appsync_url, json={'query': q}, headers=self._headers)
         response.raise_for_status()
         return response.json()
 
     def _mutation(self, m: str, v: dict):
         response = requests.post(
-            _ROOT_URL, json={'query': m, 'variables': v}, headers=self._headers)
+            self._appsync_url, json={'query': m, 'variables': v}, headers=self._headers)
         response.raise_for_status()
         response = response.json()
         if response.get('errors'):
@@ -97,7 +108,7 @@ class DeviceIdClient:
             "variables": {"deviceId": self._device_id}
         }
 
-        r = requests.post(_ROOT_URL, headers=post_headers, json=payload)
+        r = requests.post(self._appsync_url, headers=post_headers, json=payload)
         try:
             r.raise_for_status()
         except Exception:
@@ -139,8 +150,23 @@ class DeviceIdClient:
                 elif command == 'turnOff':
                     self.on_turn_off(self._device_id)
                 elif command == 'powerStatus':
-                    response = 'ON' if self.fetch_is_power_on(self._device_id) else 'OFF'
-                    response_execution = lambda: self._command_responded(command_id, response)
+                    responses = list()
+
+                    responses.append('ON' if self.fetch_is_power_on(self._device_id) else 'OFF')
+
+                    temperature = self.fetch_temperature(self._device_id)
+                    if temperature is not None:
+                        responses.append("temperature:{:02f}".format(temperature))
+
+                    thermostat_mode = self.fetch_thermostat_mode(self._device_id)
+                    if thermostat_mode:
+                        responses.append("thermostatMode:{}".format(thermostat_mode.name))
+
+                    thermostat_target_setpoint = self.fetch_thermostat_target_setpoint(self._device_id)
+                    if thermostat_target_setpoint is not None:
+                        responses.append("thermostatTargetSetpoint:{:02f}".format(thermostat_target_setpoint))
+
+                    response_execution = lambda: self._command_responded(command_id, *responses)
                 else:
                     raise ValueError('Unexpected command {}, payload {}'.format(msg.payload['command'], msg))
                 response_execution()
@@ -199,7 +225,7 @@ class DeviceIdClient:
             }
         )
 
-    def _command_responded(self, command_id: str, response: str):
+    def _command_responded(self, command_id: str, *response: str):
         self._info('Marking command %s as executed', command_id)
         self._mutation(
             '''
@@ -258,6 +284,15 @@ class Client:
 
     def set_on_turn_off(self, device_id: str, fun: callable):
         self._clients_by_device_id[device_id].on_turn_off = fun
+
+    def set_fetch_temperature(self, device_id: str, fun: callable):
+        self._clients_by_device_id[device_id].fetch_temperature = fun
+
+    def set_fetch_thermostat_mode(self, device_id: str, fun: callable):
+        self._clients_by_device_id[device_id].fetch_thermostat_mode = fun
+
+    def set_fetch_thermostat_target_setpoint(self, device_id: str, fun: callable):
+        self._clients_by_device_id[device_id].fetch_thermostat_target_setpoint = fun
 
     def set_fetch_is_power_on(self, device_id: str, fun: callable):
         self._clients_by_device_id[device_id].fetch_is_power_on = fun

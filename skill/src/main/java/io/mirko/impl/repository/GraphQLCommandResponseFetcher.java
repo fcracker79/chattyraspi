@@ -36,7 +36,7 @@ public class GraphQLCommandResponseFetcher implements CommandResponseFetcher {
         }
         final Optional<List<T>> returnValue = Optional.of((List<T>) result.get("arguments"));
 
-        logger.debug(
+        logger.info(
                 "getCommand for command {}, arguments: {} ({})",
                 commandId, result,
                 returnValue.map(d -> d.getClass().getName()).orElse("<NULL>")

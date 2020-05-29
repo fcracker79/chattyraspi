@@ -4,7 +4,7 @@ from logging.config import fileConfig
 import click
 import typing
 
-from chattyraspi.client import Client
+from chattyraspi.client import Client, ThermostatMode
 from chattyraspi.device import DevicesConfiguration
 
 
@@ -36,10 +36,25 @@ def test_devices(
         print('Returning', status)
         return status
 
+    def _fetch_temperature(device_id: str) -> float:
+        print('Device {} requested temperature'.format(device_id))
+        return 123.45
+
+    def _fetch_thermostat_mode(device_id: str) -> ThermostatMode:
+        print('Device {} requested thermostat mode'.format(device_id))
+        return ThermostatMode.COOL
+
+    def _fetch_thermostat_target_setpoing(device_id: str) -> float:
+        print('Device {} requested target setpoint'.format(device_id))
+        return 234.65
+
     for device_id in map(lambda d: d['device_id'], config.get_configuration()['Devices']):
         statuses[device_id] = False
         client.set_on_turn_on(device_id, _turn_on)
         client.set_on_turn_off(device_id, _turn_off)
+        client.set_fetch_temperature(device_id, _fetch_temperature)
+        client.set_fetch_thermostat_mode(device_id, _fetch_thermostat_mode)
+        client.set_fetch_thermostat_target_setpoint(device_id, _fetch_thermostat_target_setpoing)
         client.set_fetch_is_power_on(device_id, _fetch_is_power_on)
     client.listen()
 
