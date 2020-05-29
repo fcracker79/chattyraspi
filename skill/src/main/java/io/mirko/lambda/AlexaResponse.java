@@ -167,7 +167,7 @@ public class AlexaResponse {
         JSONObject endpoint = new JSONObject();
         endpoint.put("capabilities", new JSONArray(capabilities));
         endpoint.put("description", description.toString());
-        JSONArray displayCategories = new JSONArray("[\"SMARTPLUG\", \"THERMOSTAT\", \"TEMPERATURE_SENSOR\"]");
+        JSONArray displayCategories = new JSONArray("[\"COMPUTER\", \"SMARTPLUG\", \"THERMOSTAT\", \"TEMPERATURE_SENSOR\"]");
         endpoint.put("displayCategories", displayCategories);
         endpoint.put("manufacturerName", "mirko.io");
         endpoint.put("endpointId", endpointId);

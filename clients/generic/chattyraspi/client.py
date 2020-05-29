@@ -28,6 +28,7 @@ class ThermostatMode(enum.Enum):
     HEAT = 'HEAT'
     COOL = 'COOL'
     AUTO = 'AUTO'
+    OFF = 'OFF'
 
 
 class DeviceIdClient:

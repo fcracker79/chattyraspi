@@ -74,7 +74,44 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
             return stateReport(request, getDeviceId(request));
         }
 
+        if (filter.withHeaderNamespace("Alexa.ThermostatController").withHeaderName("SetTargetTemperature").filter()) {
+            return setTargetTemperature(
+                    request, getDeviceId(request),
+                    ((Number) getFromMap(request, "directive.payload.targetSetPoint").get()).doubleValue()
+            );
+        }
+
+        if (filter.withHeaderNamespace("Alexa.ThermostatController").withHeaderName("AdjustTargetTemperature").filter()) {
+            return adjustTargetTemperature(
+                    request, getDeviceId(request),
+                    ((Number) getFromMap(request, "directive.payload.targetSetPoint").get()).doubleValue()
+            );
+        }
+
+        if (filter.withHeaderNamespace("Alexa.ThermostatController").withHeaderName("SetThermostatMode").filter()) {
+            return setThermostatMode(
+                    request, getDeviceId(request),
+                    ThermostatMode.valueOf(
+                            (String) getFromMap(request, "directive.payload.thermostatMode.value").get()
+                    )
+            );
+        }
         throw new IllegalStateException(String.format("Unexpected request %s", request));
+    }
+
+    private Map<String, Object> setThermostatMode(Map<String, Object> request, UUID deviceId, ThermostatMode thermostatMode) {
+        final String commandId = commandSubmitter.submitCommand(deviceId, CommandType.SET_THERMOSTAT_MODE, thermostatMode.name());
+        return waitForPowerStateControlCompleted(request, commandId, null, deviceId, "Response");
+    }
+
+    private Map<String, Object> adjustTargetTemperature(Map<String, Object> request, UUID deviceId, double deltaTemperature) {
+        final String commandId = commandSubmitter.submitCommand(deviceId, CommandType.ADJUST_TEMPERATURE, deltaTemperature);
+        return waitForPowerStateControlCompleted(request, commandId, null, deviceId, "Response");
+    }
+
+    private Map<String, Object> setTargetTemperature(Map<String, Object> request, UUID deviceId, double temperature) {
+        final String commandId = commandSubmitter.submitCommand(deviceId, CommandType.SET_TEMPERATURE, temperature);
+        return waitForPowerStateControlCompleted(request, commandId, null, deviceId, "Response");
     }
 
     private UUID getDeviceId(Map<String, Object> request) {
