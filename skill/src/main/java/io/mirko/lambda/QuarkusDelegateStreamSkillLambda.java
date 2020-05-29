@@ -188,8 +188,8 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
 
     private void addHealthProperty(AlexaResponse ar) {
         ar.AddContextProperty(
-                "Alexa.TemperatureSensor",
-                "temperature",
+                "Alexa.EndpointHealth",
+                "connectivity",
                 Collections.singletonMap("value", "OK"),
                 300
         );

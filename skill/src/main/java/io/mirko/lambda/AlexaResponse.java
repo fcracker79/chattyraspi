@@ -14,10 +14,8 @@ package io.mirko.lambda;
 // language governing permissions and limitations under the License.
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Random;
-import java.util.TimeZone;
-import java.util.UUID;
+import java.util.*;
+
 import org.json.*;
 
 public class AlexaResponse {
@@ -102,6 +100,18 @@ public class AlexaResponse {
         }
     }
 
+    private JSONObject toJSONObject(Object value) {
+        if (value != null) {
+            if (value instanceof String) {
+                return new JSONObject((String) value);
+            }
+            if (value instanceof Map) {
+                return new JSONObject((Map) value);
+            }
+        }
+        return new JSONObject(value);
+    }
+
     public void AddContextProperty(String namespace, String name, Object value, int uncertaintyInMilliseconds)
     {
         JSONObject context;
@@ -137,7 +147,7 @@ public class AlexaResponse {
 
         // Handle either a JSON Object or value
         try {
-            property.put("value", new JSONObject(value));
+            property.put("value", toJSONObject(value));
         } catch (org.json.JSONException je) {
             property.put("value", value);
         }
