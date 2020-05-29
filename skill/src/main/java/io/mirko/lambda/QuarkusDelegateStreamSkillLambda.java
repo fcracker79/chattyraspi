@@ -133,7 +133,7 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
     private void addTemperatureStuff(AlexaResponse ar, List<String> commandResponse) {
         Optional<String> temperature = commandResponse.stream().filter(d -> d.contains("temperature:")).findFirst();
         Optional<String> thermostatMode = commandResponse.stream().filter(d -> d.contains("thermostatMode:")).findFirst();
-        Optional<String> thermostatTargetSetmode = commandResponse.stream().filter(d -> d.contains("thermostatTargetSetmode:"))
+        Optional<String> thermostatTargetSetmode = commandResponse.stream().filter(d -> d.contains("thermostatTargetSetpoint:"))
                 .findFirst();
 
         if (temperature.isPresent()) {
@@ -170,7 +170,7 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
         if (thermostatTargetSetmode.isPresent()) {
             try {
                 final double temperatureValue = new BigDecimal(
-                        thermostatTargetSetmode.get().substring("thermostatTargetSetmode:".length()).trim()
+                        thermostatTargetSetmode.get().substring("thermostatTargetSetpoint:".length()).trim()
                 ).setScale(2, RoundingMode.HALF_EVEN).doubleValue();
                 final Map<String, Object> value = new HashMap<>();
                 value.put("value", temperatureValue);
