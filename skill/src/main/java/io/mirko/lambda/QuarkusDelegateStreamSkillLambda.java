@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 @Named("lambda_entry_point")
@@ -51,6 +53,7 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
         throw new RuntimeException(String.format("Unexpected payload %s", request));
     }
 
+    @SuppressWarnings("unused")
     private Map<String, Object> manageDirective(Map<String, Object> request, Context context) {
         final RequestFilter filter = RequestFilter.withRequest(request);
         if (filter.withHeaderNamespace("Alexa.Discovery").withHeaderName("Discover").filter()) {
@@ -108,10 +111,13 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
                         getFromMap(request, "directive.header.correlationToken").orElseThrow(RuntimeException::new);
                 AlexaResponse ar = new AlexaResponse("Alexa", responseName, deviceId.toString(), token, correlationToken);
                 if (powerState == null) {
-                    final Optional<List<String>> commandResponse = commandResponseFetcher.getCommandResponse(commandId);
-                    powerState = commandResponse.orElse(Collections.emptyList()).contains("ON") ? "ON" : "OFF";
+                    final Optional<List<String>> optionalCommandResponse = commandResponseFetcher.getCommandResponse(commandId);
+                    final List<String> commandResponse = optionalCommandResponse.orElse(Collections.emptyList());
+                    powerState = commandResponse.contains("ON") ? "ON" : "OFF";
+                    addTemperatureStuff(ar, commandResponse);
                 }
                 ar.AddContextProperty("Alexa.PowerController", "powerState", powerState, 200);
+                addHealthProperty(ar);
                 return toMap(ar);
             }
             logger.debug("Retrying in 100 msecs' time");
@@ -122,6 +128,71 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
             }
         }
         return toMap(new AlexaResponse("Alexa", "ErrorResponse"));
+    }
+
+    private void addTemperatureStuff(AlexaResponse ar, List<String> commandResponse) {
+        Optional<String> temperature = commandResponse.stream().filter(d -> d.contains("temperature:")).findFirst();
+        Optional<String> thermostatMode = commandResponse.stream().filter(d -> d.contains("thermostatMode:")).findFirst();
+        Optional<String> thermostatTargetSetmode = commandResponse.stream().filter(d -> d.contains("thermostatTargetSetmode:"))
+                .findFirst();
+
+        if (temperature.isPresent()) {
+            try {
+                final double temperatureValue = new BigDecimal(
+                        temperature.get().substring("temperature:".length()).trim()
+                ).setScale(2, RoundingMode.HALF_EVEN).doubleValue();
+                final Map<String, Object> value = new HashMap<>();
+                value.put("value", temperatureValue);
+                value.put("scale", "CELSIUS");
+                ar.AddContextProperty(
+                        "Alexa.TemperatureSensor", "temperature",
+                        value,
+                        300
+                );
+            } catch(NumberFormatException e) {
+                logger.error(String.format("Could not parse temperature %s", temperature.get()), e);
+            }
+        }
+
+        if (thermostatMode.isPresent()) {
+            final String thermostatModeValue = thermostatMode.get().substring("thermostatMode:".length()).trim();
+            if (Arrays.asList("HEAT", "COOL", "AUTO").contains(thermostatModeValue)) {
+                ar.AddContextProperty(
+                        "Alexa.ThermostatController", "thermostatMode",
+                        thermostatModeValue,
+                        300
+                );
+            } else {
+                logger.error("Thermostat mode not supported: " + thermostatMode.get());
+            }
+        }
+
+        if (thermostatTargetSetmode.isPresent()) {
+            try {
+                final double temperatureValue = new BigDecimal(
+                        thermostatTargetSetmode.get().substring("thermostatTargetSetmode:".length()).trim()
+                ).setScale(2, RoundingMode.HALF_EVEN).doubleValue();
+                final Map<String, Object> value = new HashMap<>();
+                value.put("value", temperatureValue);
+                value.put("scale", "CELSIUS");
+                ar.AddContextProperty(
+                        "Alexa.ThermostatController", "targetSetpoint",
+                        value,
+                        300
+                );
+            } catch(NumberFormatException e) {
+                logger.error(String.format("Could not parse temperature %s", thermostatTargetSetmode.get()), e);
+            }
+        }
+    }
+
+    private void addHealthProperty(AlexaResponse ar) {
+        ar.AddContextProperty(
+                "Alexa.TemperatureSensor",
+                "temperature",
+                Collections.singletonMap("value", "OK"),
+                300
+        );
     }
 
     private Map<String, Object> discovery(Map<String, Object> request) {
@@ -140,12 +211,42 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
                 "AlexaInterface", "Alexa.PowerController", "3",
                 "{\"supported\": [ { \"name\": \"powerState\" } ], \"proactivelyReported\": true,\n" +
                         "                \"retrievable\": true }");
-        String capabilities = "[" + capabilityAlexa + ", " + capabilityAlexaPowerController + "]";
-        int i = 1;
-        for (Device d : devicesFetcher.getDevices(accountId)) {
-            ar.AddPayloadEndpoint(d.deviceName, d.deviceId.toString(), capabilities);
-            i += 1;
-        }
+        String capabilityAlexaHealth = ar.CreatePayloadEndpointCapability(
+                "AlexaInterface", "Alexa.EndpointHealth", "3",
+                "{\"supported\": [ { \"name\": \"connectivity\" } ], \"proactivelyReported\": true,\n" +
+                        "                \"retrievable\": true }"
+        );
+        String capabilityTemperatureSensor = ar.CreatePayloadEndpointCapability(
+                "AlexaInterface", "Alexa.TemperatureSensor", "3",
+                "{\"supported\": [ { \"name\": \"temperature\" } ], \"proactivelyReported\": true,\n" +
+                        "                \"retrievable\": true }"
+        );
+        String capabilityThermostat = ar.CreatePayloadEndpointCapability(
+                "AlexaInterface", "Alexa.ThermostatController", "3",
+                "{\"supported\": [ " +
+                        "{ \"name\": \"targetSetpoint\" }," +
+                        "{ \"name\": \"lowerSetpoint\" }," +
+                        "{ \"name\": \"upperSetpoint\" }," +
+                        "{ \"name\": \"thermostatMode\" }," +
+                        " ], " +
+                        "\"proactivelyReported\": true,\n" +
+                        "\"retrievable\": true }",
+                "{" +
+                        "\"supportedModes\": [\"HEAT\", \"COOL\", \"AUTO\"]," +
+                        "\"supportsScheduling\": false" +
+                        "}"
+        );
+        String capabilities = "[" +
+                capabilityAlexa +
+                ", " + capabilityAlexaPowerController +
+                ", " + capabilityAlexaHealth +
+                ", " + capabilityThermostat +
+                ", " + capabilityTemperatureSensor +
+                "]";
+        logger.debug("Alexa.Discovery Capabilities: {}", capabilities);
+        devicesFetcher.getDevices(accountId).forEach(
+                d -> ar.AddPayloadEndpoint(d.deviceName, d.deviceId.toString(), capabilities)
+        );
         return toMap(ar);
     }
 
@@ -216,8 +317,7 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
                 //noinspection unchecked
                 t = (Optional<T>) cachedRequestValues.get(field);
             } else {
-                //noinspection unchecked
-                t = (Optional<T>) getFromMap(request, field);
+                t = getFromMap(request, field);
                 cachedRequestValues.put(field, t);
             }
             return t;

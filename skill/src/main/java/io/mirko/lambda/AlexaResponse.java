@@ -61,7 +61,9 @@ public class AlexaResponse {
         endpoint.put("endpointId", CheckValue(endpointId, "INVALID"));
 
         event.put("header", header);
-        event.put("endpoint", endpoint);
+        if (!endpointId.equals("INVALID")) {
+            event.put("endpoint", endpoint);
+        }
         event.put("payload", payload);
 
         response.put("event", event);
@@ -100,7 +102,7 @@ public class AlexaResponse {
         }
     }
 
-    public void AddContextProperty(String namespace, String name, String value, int uncertaintyInMilliseconds)
+    public void AddContextProperty(String namespace, String name, Object value, int uncertaintyInMilliseconds)
     {
         JSONObject context;
         JSONArray properties;
@@ -119,7 +121,7 @@ public class AlexaResponse {
 
     }
 
-    public String CreateContextProperty(String namespace, String name, String value, int uncertaintyInMilliseconds) {
+    public String CreateContextProperty(String namespace, String name, Object value, int uncertaintyInMilliseconds) {
 
         JSONObject property = new JSONObject();
         property.put("namespace", namespace);
@@ -144,15 +146,20 @@ public class AlexaResponse {
     }
 
     public String CreatePayloadEndpoint(String friendlyName, String endpointId, String capabilities, String cookie){
+        if (endpointId == null) {
+            endpointId = "endpoint_" + 100000 + new Random().nextInt(900000);
+        }
+        StringBuilder description = new StringBuilder("mirko.io ");
+        if (friendlyName != null) {
+            description.append(friendlyName).append(" ");
+        }
+        description.append("(id: ").append(endpointId).append(")");
         JSONObject endpoint = new JSONObject();
         endpoint.put("capabilities", new JSONArray(capabilities));
-        endpoint.put("description", "Sample Endpoint Description");
-        JSONArray displayCategories = new JSONArray("[\"SMARTPLUG\"]");
+        endpoint.put("description", description.toString());
+        JSONArray displayCategories = new JSONArray("[\"SMARTPLUG\", \"THERMOSTAT\", \"TEMPERATURE_SENSOR\"]");
         endpoint.put("displayCategories", displayCategories);
         endpoint.put("manufacturerName", "mirko.io");
-
-        if (endpointId == null)
-            endpointId = "endpoint_" + 100000 + new Random().nextInt(900000);
         endpoint.put("endpointId", endpointId);
 
         if (friendlyName == null)
@@ -165,7 +172,12 @@ public class AlexaResponse {
         return endpoint.toString();
     }
 
-    public String CreatePayloadEndpointCapability(String type, String interfaceValue, String version, String properties) {
+    public String CreatePayloadEndpointCapability(
+            String type, String interfaceValue, String version, String properties) {
+        return CreatePayloadEndpointCapability(type, interfaceValue, version, properties, null);
+    }
+    public String CreatePayloadEndpointCapability(
+            String type, String interfaceValue, String version, String properties, String configuration) {
 
         JSONObject capability = new JSONObject();
         capability.put("type", type);
@@ -175,6 +187,9 @@ public class AlexaResponse {
         if (properties != null)
             capability.put("properties", new JSONObject(properties));
 
+        if (configuration != null) {
+            capability.put("configuration", new JSONObject(configuration));
+        }
         return capability.toString();
     }
 

@@ -5,4 +5,5 @@ dist
 *.pyc
 __pycache__/
 chattyraspi.yml
+dev_chattyraspi.yml
 logging.conf

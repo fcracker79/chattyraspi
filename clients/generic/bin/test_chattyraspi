@@ -18,7 +18,7 @@ def test_devices(
         fileConfig(logging_conf, disable_existing_loggers=False)
 
     config = DevicesConfiguration(config)
-    client = Client(config)
+    client = Client(config, dev_environment=True)
 
     statuses = dict()
 
