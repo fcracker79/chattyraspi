@@ -7,6 +7,8 @@ from urllib.parse import urlparse
 
 import paho.mqtt.client as mqtt
 import requests
+import typing
+
 from chattyraspi.device import DevicesConfiguration
 
 
@@ -19,7 +21,7 @@ _ROOT_URL = 'https://c7knkzejobbqpnaz4gskh77nmm.appsync-api.eu-west-1.amazonaws.
 _DEV_ROOT_URL = 'https://dnbcs5up6jcyro7ejt3xgc4zbu.appsync-api.eu-west-1.amazonaws.com/graphql'
 
 
-def _do_nothing(_):
+def _do_nothing(*_):
     pass
 
 
@@ -31,18 +33,27 @@ class ThermostatMode(enum.Enum):
     OFF = 'OFF'
 
 
+DeviceID = typing.NewType('DeviceID', str)
+
+
 class DeviceIdClient:
+    # noinspection PyTypeChecker
     def __init__(self, device_id: str, openid_token: str, reconnect_time_seconds: int, appsync_url: str):
         self._headers = {
             'Authorization': openid_token
         }
         self._device_id = device_id
-        self.on_turn_on = _do_nothing
-        self.on_turn_off = _do_nothing
-        self.fetch_is_power_on = _do_nothing
-        self.fetch_temperature = _do_nothing
-        self.fetch_thermostat_mode = _do_nothing
-        self.fetch_thermostat_target_setpoint = _do_nothing
+        self.on_turn_on = _do_nothing  # type: typing.Callable[[DeviceID], None]
+        self.on_turn_off = _do_nothing  # type: typing.Callable[[DeviceID], None]
+        self.fetch_is_power_on = _do_nothing  # type: typing.Callable[[DeviceID], typing.Optional[bool]]
+        self.fetch_temperature = _do_nothing  # type: typing.Callable[[DeviceID], typing.Optional[float]]
+        self.fetch_thermostat_mode = _do_nothing  # type: typing.Callable[[DeviceID], typing.Optional[ThermostatMode]]
+        self.fetch_thermostat_target_setpoint = _do_nothing  # type: typing.Callable[[DeviceID], typing.Optional[float]]
+
+        self.on_set_temperature = _do_nothing  # type: typing.Callable[[DeviceID, float], None]
+        self.on_adjust_temperature = _do_nothing  # type: typing.Callable[[DeviceID, float], None]
+        self.on_set_thermostat_mode = _do_nothing  # type: typing.Callable[[DeviceID, ThermostatMode], None]
+
         self._logger = logging.getLogger('client.raspi.alexa.mirko.io')
         self._reconnect_time_seconds = reconnect_time_seconds
         self._appsync_url = appsync_url
@@ -52,21 +63,27 @@ class DeviceIdClient:
         return self._device_id
 
     def _info(self, s: str, *args, **kwargs):
+        # noinspection PyArgumentList
         self._log(self._logger.info, s, *args, **kwargs)
 
     def _debug(self, s: str, *args, **kwargs):
+        # noinspection PyArgumentList
         self._log(self._logger.debug, s, *args, **kwargs)
 
     def _warning(self, s: str, *args, **kwargs):
+        # noinspection PyArgumentList
         self._log(self._logger.warning, s, *args, **kwargs)
 
     def _error(self, s: str, *args, **kwargs):
+        # noinspection PyArgumentList
         self._log(self._logger.error, s, *args, **kwargs)
 
     def _exception(self, s: str, *args, **kwargs):
+        # noinspection PyArgumentList
         self._log(self._logger.exception, s, *args, **kwargs)
 
-    def _log(self, log_function, s: str, *args, **kwargs):
+    def _log(self, log_function: callable, s: str, *args, **kwargs):
+        # noinspection PyArgumentList
         log_function('[%s] ' + s, self._device_id, *args, **kwargs)
 
     def _query(self, q: str):
@@ -141,8 +158,10 @@ class DeviceIdClient:
             command_payload = json.loads(msg.payload.decode())
             command = command_payload['data']['onCommandCreated']['command']
             command_id = command_payload['data']['onCommandCreated']['commandId']
+            arguments = command_payload['data']['onCommandCreated']['arguments']
 
-            response_execution = lambda: self._command_executed(command_id)
+            def response_execution():
+                self._command_executed(command_id)
 
             # noinspection PyBroadException
             try:
@@ -151,23 +170,13 @@ class DeviceIdClient:
                 elif command == 'turnOff':
                     self.on_turn_off(self._device_id)
                 elif command == 'powerStatus':
-                    responses = list()
-
-                    responses.append('ON' if self.fetch_is_power_on(self._device_id) else 'OFF')
-
-                    temperature = self.fetch_temperature(self._device_id)
-                    if temperature is not None:
-                        responses.append("temperature:{:02f}".format(temperature))
-
-                    thermostat_mode = self.fetch_thermostat_mode(self._device_id)
-                    if thermostat_mode:
-                        responses.append("thermostatMode:{}".format(thermostat_mode.name))
-
-                    thermostat_target_setpoint = self.fetch_thermostat_target_setpoint(self._device_id)
-                    if thermostat_target_setpoint is not None:
-                        responses.append("thermostatTargetSetpoint:{:02f}".format(thermostat_target_setpoint))
-
-                    response_execution = lambda: self._command_responded(command_id, *responses)
+                    response_execution = self._on_power_status(command_id)
+                elif command == 'setTemperature':
+                    self.on_set_temperature(self._device_id, float(arguments[0]))
+                elif command == 'adjustTemperature':
+                    self.on_adjust_temperature(self._device_id, float(arguments[0]))
+                elif command == 'setThermostatMode':
+                    self.on_set_thermostat_mode(self._device_id, ThermostatMode(arguments[0]))
                 else:
                     raise ValueError('Unexpected command {}, payload {}'.format(msg.payload['command'], msg))
                 response_execution()
@@ -208,6 +217,30 @@ class DeviceIdClient:
             self._debug('Disconnecting')
             client.disconnect()
             del client
+
+    def _on_power_status(self, command_id: str) -> callable:
+        responses = list()
+
+        responses.append('ON' if self.fetch_is_power_on(self._device_id) else 'OFF')
+
+        # noinspection PyNoneFunctionAssignment
+        temperature = self.fetch_temperature(self._device_id)
+        if temperature is not None:
+            # noinspection PyStringFormat
+            responses.append("temperature:{:02f}".format(temperature))
+
+        # noinspection PyNoneFunctionAssignment
+        thermostat_mode = self.fetch_thermostat_mode(self._device_id)
+        if thermostat_mode:
+            responses.append("thermostatMode:{}".format(thermostat_mode.name))
+
+        # noinspection PyNoneFunctionAssignment
+        thermostat_target_setpoint = self.fetch_thermostat_target_setpoint(self._device_id)
+        if thermostat_target_setpoint is not None:
+            # noinspection PyStringFormat
+            responses.append("thermostatTargetSetpoint:{:02f}".format(thermostat_target_setpoint))
+
+        return lambda: self._command_responded(command_id, *responses)
 
     def _command_executed(self, command_id: str):
         self._info('Marking command %s as executed', command_id)
@@ -297,6 +330,15 @@ class Client:
 
     def set_fetch_is_power_on(self, device_id: str, fun: callable):
         self._clients_by_device_id[device_id].fetch_is_power_on = fun
+
+    def set_on_set_temperature(self, device_id, fun: callable):
+        self._clients_by_device_id[device_id].set_on_set_temperature = fun
+
+    def set_on_adjust_temperature(self, device_id, fun: callable):
+        self._clients_by_device_id[device_id].set_on_adjust_temperature = fun
+
+    def set_on_set_thermostat_mode(self, device_id, fun: callable):
+        self._clients_by_device_id[device_id].set_on_set_thermostat_mode = fun
 
     def listen(self):
         executor = ThreadPoolExecutor(max_workers=len(self._clients_by_device_id))
