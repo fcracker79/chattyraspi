@@ -22,17 +22,23 @@ Custom script
 -------------
 
 Chattyraspi allows you to intercept the following Alexa interface
-commands: 1. All the turn on/off requests 2. Temperature sensor commands
+commands:
+
+1. All the turn on/off requests
+2. Temperature sensor commands
 3. Thermostat control commands
 
 upon which you can freely react as you wish.
 
-For instance, you might decide to: \* Power control devices attached on
-your Raspi using Alexa interface \* Receive on Alexa temperature info
-from a sensor connected to your Raspi \* Hack the Alexa thermostat
-interface to control step motors rotation \* Hack the Alexa thermostat
-interface to control brushless motors speed \* Associate the Tun On/Off
-command to sysadmin tasks, such as starting networking services
+For instance, you might decide to:
+
+-  Power control devices attached on your Raspi using Alexa interface
+-  Receive on Alexa temperature info from a sensor connected to your
+   Raspi
+-  Hack the Alexa thermostat interface to control step motors rotation
+-  Hack the Alexa thermostat interface to control brushless motors speed
+-  Associate the Tun On/Off command to sysadmin tasks, such as starting
+   networking services
 
 This snippet of code comes from the ``test_chattyraspi`` script, as an
 example of how to implement custom logics when receiving Alexa commands:
