@@ -15,10 +15,22 @@ Quick start
 
 Custom script
 -------------
-Chattyraspi allows you to intercept all the turn on/off requests from Alexa, 
+Chattyraspi allows you to intercept the following Alexa interface commands:
+1. All the turn on/off requests
+2. Temperature sensor commands
+3. Thermostat control commands
+
 upon which you can freely react as you wish.
 
-This snippet of code comes from the `test_chattyraspi` script:
+For instance, you might decide to:
+* Power control devices attached on your Raspi using Alexa interface
+* Receive on Alexa temperature info from a sensor connected to your Raspi
+* Hack the Alexa thermostat interface to control step motors rotation
+* Hack the Alexa thermostat interface to control brushless motors speed
+* Associate the Tun On/Off command to sysadmin tasks, such as starting networking services
+
+This snippet of code comes from the `test_chattyraspi` script, 
+as an example of how to implement custom logics when receiving Alexa commands:
 
 ```python
 #!/usr/bin/env python
@@ -27,7 +39,7 @@ from logging.config import fileConfig
 import click
 import typing
 
-from chattyraspi.client import Client
+from chattyraspi.client import Client, ThermostatMode
 from chattyraspi.device import DevicesConfiguration
 
 
@@ -60,13 +72,15 @@ def test_devices():
 
     def _fetch_is_power_on(device_id: str) -> bool:
         print('Device {} requested power status'.format(device_id))
-        # Here Alexa is asking for the the power status of your device.
+        # Here Alexa is asking for the power status of your device.
         # Please be consistent with what you have done before
         status = statuses[device_id]
         print('Returning', status)
         return status
     
     def _fetch_temperature(device_id: str) -> float:
+        # Here Alexa is asking for the current temperature.
+        # This may happen both on status report or explicit temperature request.
         print('Device {} requested temperature'.format(device_id))
         temperature = temperatures[device_id]
         # Simulate a temperature that has not been reached yet
@@ -76,26 +90,36 @@ def test_devices():
         return temperature
 
     def _fetch_thermostat_mode(device_id: str) -> ThermostatMode:
+         # Here Alexa is asking for the thermostat mode.
+        # This may happen both on status report or explicit thermostat mode request.
         print('Device {} requested thermostat mode'.format(device_id))
         thermostat_mode = thermostat_modes[device_id]
         print('Returning', thermostat_mode)
         return thermostat_mode
 
     def _fetch_thermostat_target_setpoing(device_id: str) -> float:
+        # Here Alexa is asking for the current temperature.
+        # This may happen both on status report or explicit temperature request.
         print('Device {} requested target setpoint'.format(device_id))
         temperature = temperatures[device_id]
         print('Returning', temperature)
         return temperature
 
     def _on_set_temperature(device_id: str, temperature: float):
+        # Here Alexa is asking to set the target temperature.
+        # Please be consistent with what you have done before
         print('Device {} set temperature at {}'.format(device_id, temperature))
         temperatures[device_id] = temperature
 
     def _on_adjust_temperature(device_id: str, temperature: float):
+        # Here Alexa is asking to adjust the target temperature by a delta..
+        # Please be consistent with what you have done before        
         print('Device {} adjust temperature by {}'.format(device_id, temperature))
         temperatures[device_id] += temperature
 
     def _on_set_thermostat_mode(device_id: str, thermostat_mode: ThermostatMode):
+        # Here Alexa is asking to set the thermostat mode.
+        # Please be consistent with what you have done before
         print('Device {} set thermostat_mode {}'.format(device_id, thermostat_mode))
         thermostat_modes[device_id] = thermostat_mode
     
