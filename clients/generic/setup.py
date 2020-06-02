@@ -18,7 +18,7 @@ def get_scripts() -> list:
     return [os.path.join('bin', os.path.basename(f)) for f in listdir(path) if isfile(join(path, f))]
 
 setup(name='chattyraspi',
-      version='0.0.6',
+      version='0.0.7',
       description='Allows interaction between Alexa and your Raspberry Pi',
       long_description=readfile('README.rst'),
       url='https://github.com/fcracker79/alexa-home-skill/clients/generic',
