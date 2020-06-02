@@ -77,14 +77,14 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
         if (filter.withHeaderNamespace("Alexa.ThermostatController").withHeaderName("SetTargetTemperature").filter()) {
             return setTargetTemperature(
                     request, getDeviceId(request),
-                    ((Number) getFromMap(request, "directive.payload.targetSetPoint").get()).doubleValue()
+                    ((Number) getFromMap(request, "directive.payload.targetSetpoint.value").get()).doubleValue()
             );
         }
 
         if (filter.withHeaderNamespace("Alexa.ThermostatController").withHeaderName("AdjustTargetTemperature").filter()) {
             return adjustTargetTemperature(
                     request, getDeviceId(request),
-                    ((Number) getFromMap(request, "directive.payload.targetSetPoint").get()).doubleValue()
+                    ((Number) getFromMap(request, "directive.payload.targetSetpoint.value").get()).doubleValue()
             );
         }
 
@@ -168,6 +168,7 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
     }
 
     private void addTemperatureStuff(AlexaResponse ar, List<String> commandResponse) {
+        logger.debug("Adding temperature stuff, commandResponse: {}", commandResponse);
         Optional<String> temperature = commandResponse.stream().filter(d -> d.contains("temperature:")).findFirst();
         Optional<String> thermostatMode = commandResponse.stream().filter(d -> d.contains("thermostatMode:")).findFirst();
         Optional<String> thermostatTargetSetmode = commandResponse.stream().filter(d -> d.contains("thermostatTargetSetpoint:"))
