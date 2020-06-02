@@ -40,6 +40,8 @@ def test_devices():
     client = Client(config)
 
     statuses = dict()
+    temperatures = dict()
+    thermostat_modes = dict()
 
     def _turn_on(device_id: str):
         print('Device {} turned ON'.format(device_id))
@@ -64,6 +66,39 @@ def test_devices():
         print('Returning', status)
         return status
     
+    def _fetch_temperature(device_id: str) -> float:
+        print('Device {} requested temperature'.format(device_id))
+        temperature = temperatures[device_id]
+        # Simulate a temperature that has not been reached yet
+        if temperature is not None:
+            temperature -= 10
+        print('Returning', temperature)
+        return temperature
+
+    def _fetch_thermostat_mode(device_id: str) -> ThermostatMode:
+        print('Device {} requested thermostat mode'.format(device_id))
+        thermostat_mode = thermostat_modes[device_id]
+        print('Returning', thermostat_mode)
+        return thermostat_mode
+
+    def _fetch_thermostat_target_setpoing(device_id: str) -> float:
+        print('Device {} requested target setpoint'.format(device_id))
+        temperature = temperatures[device_id]
+        print('Returning', temperature)
+        return temperature
+
+    def _on_set_temperature(device_id: str, temperature: float):
+        print('Device {} set temperature at {}'.format(device_id, temperature))
+        temperatures[device_id] = temperature
+
+    def _on_adjust_temperature(device_id: str, temperature: float):
+        print('Device {} adjust temperature by {}'.format(device_id, temperature))
+        temperatures[device_id] += temperature
+
+    def _on_set_thermostat_mode(device_id: str, thermostat_mode: ThermostatMode):
+        print('Device {} set thermostat_mode {}'.format(device_id, thermostat_mode))
+        thermostat_modes[device_id] = thermostat_mode
+    
     # Some boilerplate code: here we add the same callbacks for each configured
     # device.
     for device_id in map(lambda d: d['device_id'], config.get_configuration()['Devices']):
@@ -71,6 +106,12 @@ def test_devices():
         client.set_on_turn_on(device_id, _turn_on)
         client.set_on_turn_off(device_id, _turn_off)
         client.set_fetch_is_power_on(device_id, _fetch_is_power_on)
+        client.set_fetch_temperature(device_id, _fetch_temperature)
+        client.set_fetch_thermostat_mode(device_id, _fetch_thermostat_mode)
+        client.set_fetch_thermostat_target_setpoint(device_id, _fetch_thermostat_target_setpoing)
+        client.set_on_set_temperature(device_id, _on_set_temperature)
+        client.set_on_adjust_temperature(device_id, _on_adjust_temperature)
+        client.set_on_set_thermostat_mode(device_id, _on_set_thermostat_mode)
     client.listen()
 
 

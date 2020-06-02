@@ -69,7 +69,7 @@ def test_devices(
 
     def _on_set_thermostat_mode(device_id: str, thermostat_mode: ThermostatMode):
         print('Device {} set thermostat_mode {}'.format(device_id, thermostat_mode))
-        thermostat_modes[device_id] += thermostat_mode
+        thermostat_modes[device_id] = thermostat_mode
 
     for device_id in map(lambda d: d['device_id'], config.get_configuration()['Devices']):
         statuses[device_id] = False
