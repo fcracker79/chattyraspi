@@ -165,6 +165,7 @@ class DeviceIdClient:
 
             # noinspection PyBroadException
             try:
+                self._logger.info('Received command %s(%s)', command, arguments)
                 if command == 'turnOn':
                     self.on_turn_on(self._device_id)
                 elif command == 'turnOff':
@@ -173,10 +174,13 @@ class DeviceIdClient:
                     response_execution = self._on_power_status(command_id)
                 elif command == 'setTemperature':
                     self.on_set_temperature(self._device_id, float(arguments[0]))
+                    response_execution = self._on_thermostat_changed(command_id)
                 elif command == 'adjustTemperature':
                     self.on_adjust_temperature(self._device_id, float(arguments[0]))
+                    response_execution = self._on_thermostat_changed(command_id)
                 elif command == 'setThermostatMode':
                     self.on_set_thermostat_mode(self._device_id, ThermostatMode(arguments[0]))
+                    response_execution = self._on_thermostat_changed(command_id)
                 else:
                     raise ValueError('Unexpected command {}, payload {}'.format(msg.payload['command'], msg))
                 response_execution()
@@ -217,6 +221,27 @@ class DeviceIdClient:
             self._debug('Disconnecting')
             client.disconnect()
             del client
+
+    def _on_thermostat_changed(self, command_id: str) -> callable:
+        responses = list()
+        # noinspection PyNoneFunctionAssignment
+        temperature = self.fetch_temperature(self._device_id)
+        if temperature is not None:
+            # noinspection PyStringFormat
+            responses.append("temperature:{:02f}".format(temperature))
+
+        # noinspection PyNoneFunctionAssignment
+        thermostat_mode = self.fetch_thermostat_mode(self._device_id)
+        if thermostat_mode:
+            responses.append("thermostatMode:{}".format(thermostat_mode.name))
+
+        # noinspection PyNoneFunctionAssignment
+        thermostat_target_setpoint = self.fetch_thermostat_target_setpoint(self._device_id)
+        if thermostat_target_setpoint is not None:
+            # noinspection PyStringFormat
+            responses.append("thermostatTargetSetpoint:{:02f}".format(thermostat_target_setpoint))
+
+        return lambda: self._command_responded(command_id, *responses)
 
     def _on_power_status(self, command_id: str) -> callable:
         responses = list()
@@ -332,13 +357,13 @@ class Client:
         self._clients_by_device_id[device_id].fetch_is_power_on = fun
 
     def set_on_set_temperature(self, device_id, fun: callable):
-        self._clients_by_device_id[device_id].set_on_set_temperature = fun
+        self._clients_by_device_id[device_id].on_set_temperature = fun
 
     def set_on_adjust_temperature(self, device_id, fun: callable):
-        self._clients_by_device_id[device_id].set_on_adjust_temperature = fun
+        self._clients_by_device_id[device_id].on_adjust_temperature = fun
 
     def set_on_set_thermostat_mode(self, device_id, fun: callable):
-        self._clients_by_device_id[device_id].set_on_set_thermostat_mode = fun
+        self._clients_by_device_id[device_id].on_set_thermostat_mode = fun
 
     def listen(self):
         executor = ThreadPoolExecutor(max_workers=len(self._clients_by_device_id))
