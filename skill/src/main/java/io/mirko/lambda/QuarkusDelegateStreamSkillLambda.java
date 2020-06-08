@@ -84,7 +84,7 @@ public class QuarkusDelegateStreamSkillLambda implements RequestHandler<Map<Stri
         if (filter.withHeaderNamespace("Alexa.ThermostatController").withHeaderName("AdjustTargetTemperature").filter()) {
             return adjustTargetTemperature(
                     request, getDeviceId(request),
-                    ((Number) getFromMap(request, "directive.payload.targetSetpoint.value").get()).doubleValue()
+                    ((Number) getFromMap(request, "directive.payload.targetSetpointDelta.value").get()).doubleValue()
             );
         }
 
