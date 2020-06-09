@@ -68,7 +68,7 @@ If you need further info on how to implement your own behaviours, please refer t
 Detect your devices
 -------------------
 
-Just ask Alexa to detect your devices: it should find your Raspberry Pis you have configured. Now you can freely send commands to your devices ... well, currently just Turn On and Turn Off commands, but more commands are to come, provided that Amazon clears the certification path.
+Just ask Alexa to detect your devices: it should find your Raspberry Pis you have configured. Now you can freely send commands to your devices ... well, currently just Turn On, Turn Off, Temperature and Thermostat commands, but more commands are to come.
 
 Troubleshooting
 ---------------
