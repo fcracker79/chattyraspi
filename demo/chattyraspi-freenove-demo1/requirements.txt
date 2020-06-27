@@ -1,1 +1,3 @@
 chattyraspi>=0.0.8
+click~=7.0
+wiringpi~=2.0
