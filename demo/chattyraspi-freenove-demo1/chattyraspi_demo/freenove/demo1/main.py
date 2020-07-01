@@ -89,6 +89,7 @@ def test_devices(
         client.set_on_set_temperature(device_id, _on_set_temperature)
         client.set_on_adjust_temperature(device_id, _on_adjust_temperature)
         client.set_on_set_thermostat_mode(device_id, _on_set_thermostat_mode)
+    lights.init_wiringpi()
     client.listen()
 
 
