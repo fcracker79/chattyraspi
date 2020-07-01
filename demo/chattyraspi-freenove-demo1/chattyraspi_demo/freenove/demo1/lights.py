@@ -8,6 +8,8 @@ _LED1_PIN_NUMBER = 0
 
 class Light(enum.IntEnum):
     LUCE0 = 0
+    LUCE1 = 1
+    LUCE2 = 2
 
 
 def init_wiringpi():

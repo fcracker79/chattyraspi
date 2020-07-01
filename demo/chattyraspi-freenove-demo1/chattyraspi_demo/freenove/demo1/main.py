@@ -10,6 +10,13 @@ from chattyraspi.device import DevicesConfiguration
 from chattyraspi_demo.freenove.demo1 import lights
 
 
+LIGHTS = {
+    '4e3c7b4a-fc25-4779-8923-2962aae068d2': lights.Light.LUCE0,
+    '76cbaa37-2228-48f3-bb01-ae26033ede5d': lights.Light.LUCE1,
+    '940b2d63-94d9-4646-bf3a-d525c9d3a56a': lights.Light.LUCE2
+}
+
+
 @click.command()
 @click.option('--logging_conf', help='Full path of logging configuration file')
 @click.option('--config', help='the path of your devices configuration YAML file', required=True)
@@ -30,12 +37,12 @@ def test_devices(
     def _turn_on(device_id: str):
         print('Device {} turned ON'.format(device_id))
         statuses[device_id] = True
-        lights.turn_on_light(lights.Light.LUCE0)
+        lights.turn_on_light(LIGHTS[device_id])
 
     def _turn_off(device_id: str):
         print('Device {} turned OFF'.format(device_id))
         statuses[device_id] = False
-        lights.turn_off_light(lights.Light.LUCE0)
+        lights.turn_off_light(LIGHTS[device_id])
 
     def _fetch_is_power_on(device_id: str) -> bool:
         print('Device {} requested power status'.format(device_id))
