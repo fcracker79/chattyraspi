@@ -24,8 +24,8 @@ def stop_camera():
 
 def set_degree(degree: float):
     degree = int(min(180.0, max(0.0, degree)))
-    _LOGGER.info('wiringpi.softPwmWrite(%s, %s)', _SERVO_PIN, degree)
     degree = map_angle(degree, 0, 200, _SERVO_MIN_MS, _SERVO_MAX_MS)
+    _LOGGER.info('wiringpi.softPwmWrite(%s, %s)', _SERVO_PIN, degree)
     wiringpi.softPwmWrite(_SERVO_PIN, degree)
 
 
@@ -35,4 +35,4 @@ def set_mode(mode: ThermostatMode):
 
 
 def map_angle(value: int, from_low: int, from_high: int, to_low: int, to_high: int) -> int:
-    return (to_high-to_low)*(value-from_low) // (from_high-from_low) + to_low
+    return (to_high - to_low) * (value - from_low) // (from_high - from_low) + to_low
