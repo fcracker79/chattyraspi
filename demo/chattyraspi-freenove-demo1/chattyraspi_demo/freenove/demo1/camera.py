@@ -31,5 +31,5 @@ def set_mode(mode: ThermostatMode):
     pass
 
 
-def map_angle(value: int, from_low: int, from_high: int, to_low: int, to_high: int):
-    return (to_high-to_low)*(value-from_low) / (from_high-from_low) + to_low
+def map_angle(value: int, from_low: int, from_high: int, to_low: int, to_high: int) -> int:
+    return (to_high-to_low)*(value-from_low) // (from_high-from_low) + to_low
