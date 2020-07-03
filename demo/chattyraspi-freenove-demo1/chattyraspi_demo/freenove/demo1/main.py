@@ -7,7 +7,7 @@ import typing
 from chattyraspi.client import Client, ThermostatMode
 from chattyraspi.device import DevicesConfiguration
 
-from chattyraspi_demo.freenove.demo1 import lights, camera
+from chattyraspi_demo.freenove.demo1 import lights, camera, commons
 
 LIGHTS = {
     '4e3c7b4a-fc25-4779-8923-2962aae068d2': lights.Light.LUCE0,
@@ -106,7 +106,9 @@ def test_devices(
         client.set_on_set_temperature(device_id, _on_set_temperature)
         client.set_on_adjust_temperature(device_id, _on_adjust_temperature)
         client.set_on_set_thermostat_mode(device_id, _on_set_thermostat_mode)
-    lights.init_wiringpi()
+    commons.init_wiringpi()
+    lights.init_lights()
+    camera.init_camera()
     client.listen()
 
 

@@ -3,16 +3,19 @@ import logging
 import wiringpi
 from chattyraspi.client import ThermostatMode
 
-_OFFSET_MS = 3
-_SERVO_MIN_MS = _OFFSET_MS + 5
-_SERVO_MAX_MS = _OFFSET_MS + 25
+_SERVO_MIN_MS = 3
+_SERVO_MAX_MS = 25
 _SERVO_PIN = 1
 _LOGGER = logging.getLogger('servomotor')
 
 
-def start_camera():
+def init_camera():
     _LOGGER.info('wiringpi.softPwmCreate(%s, 0, 200)', _SERVO_PIN)
     wiringpi.softPwmCreate(_SERVO_PIN, 0, 200)
+
+
+def start_camera():
+    set_degree(0)
 
 
 def stop_camera():
@@ -22,7 +25,7 @@ def stop_camera():
 def set_degree(degree: float):
     degree = int(min(180.0, max(0.0, degree)))
     _LOGGER.info('wiringpi.softPwmWrite(%s, %s)', _SERVO_PIN, degree)
-    degree = map_angle(degree, 0, 180, _SERVO_MIN_MS, _SERVO_MAX_MS)
+    degree = map_angle(degree, 0, 200, _SERVO_MIN_MS, _SERVO_MAX_MS)
     wiringpi.softPwmWrite(_SERVO_PIN, degree)
 
 

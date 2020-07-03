@@ -12,8 +12,7 @@ class Light(enum.IntEnum):
     LUCE2 = 2
 
 
-def init_wiringpi():
-    wiringpi.wiringPiSetup()
+def init_lights():
     for light in Light:
         wiringpi.pinMode(light.value, wiringpi.OUTPUT)
 
