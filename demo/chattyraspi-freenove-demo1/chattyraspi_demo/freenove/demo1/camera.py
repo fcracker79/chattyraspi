@@ -14,7 +14,7 @@ def stop_camera():
 
 
 def set_degree(degree: float):
-    degree = min(180.0, max(0.0, degree))
+    degree = min(180.0, max(0.0, int(degree)))
     wiringpi.softPwmWrite(_SERVO_PIN, degree)
 
 
