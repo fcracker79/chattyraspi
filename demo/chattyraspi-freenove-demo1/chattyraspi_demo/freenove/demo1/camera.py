@@ -20,6 +20,9 @@ def _get_channels():
     return _get_channels.channels
 
 
+_get_channels.channels = None
+
+
 def _remote_call(function_name: str, *args):
     req, resp = _get_channels()
     req.put((function_name, args))
