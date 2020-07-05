@@ -26,7 +26,10 @@ _get_channels.channels = None
 def _remote_call(function_name: str, *args):
     req, resp = _get_channels()
     req.put((function_name, args))
-    return resp.get()
+    result = resp.get()
+    if isinstance(result, Exception):
+        raise result
+    return result
 
 
 def init_camera():
