@@ -32,10 +32,12 @@ def _remote_call(function_name: str, *args):
 def init_camera():
     p = mp.Process(name='PWMWorker', daemon=True, target=_execute_remote_call, args=_get_channels())
     p.start()
-    return _remote_call('_init_camera_mp')
+    _remote_call('_init_camera_mp')
 
 
 def _init_camera_mp():
+    _LOGGER.info('wiringpi.wiringPiSetup()', _SERVO_PIN)
+    wiringpi.wiringPiSetup()
     _LOGGER.info('wiringpi.softPwmCreate(%s, 0, 200)', _SERVO_PIN)
     wiringpi.softPwmCreate(_SERVO_PIN, 0, 200)
 
