@@ -39,7 +39,7 @@ def init_camera():
 
 
 def _init_camera_mp():
-    _LOGGER.info('wiringpi.wiringPiSetup()', _SERVO_PIN)
+    _LOGGER.info('wiringpi.wiringPiSetup()')
     wiringpi.wiringPiSetup()
     _LOGGER.info('wiringpi.softPwmCreate(%s, 0, 200)', _SERVO_PIN)
     wiringpi.softPwmCreate(_SERVO_PIN, 0, 200)
