@@ -60,7 +60,7 @@ def set_degree(degree: float):
     delta_degree, direction = degree - set_degree.current_degree, 1
     if delta_degree < 0:
         delta_degree, direction = -delta_degree, -1
-    _get_queue().put((direction, degree))
+    _get_queue().put((direction, delta_degree))
     set_degree.current_degree = degree
 
 
