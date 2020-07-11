@@ -1,7 +1,9 @@
 import logging
+import threading
 import time
 
 from chattyraspi.client import ThermostatMode
+import queue
 import RPi.GPIO as GPIO
 
 _LOGGER = logging.getLogger('servomotor')
@@ -9,6 +11,25 @@ _LOGGER = logging.getLogger('servomotor')
 _MOTOR_PINS = (12, 16, 18, 22)
 _CCW_STEP = (0x01, 0x02, 0x04, 0x08)
 _CW_STEP = (0x08, 0x04, 0x02, 0x01)
+
+
+class StepperThread(threading.Thread):
+    def __init__(self, q: queue.Queue):
+        super(StepperThread, self).__init__(name='StepperThread', daemon=True)
+        self._q = q
+
+    def run(self):
+        while True:
+            _remote_set_degree(self._q.get())
+
+
+def _get_queue():
+    if _get_queue.queue is None:
+        _get_queue.queue = queue.Queue()
+    return _get_queue.queue
+
+
+_get_queue.queue = queue.Queue()
 
 
 def init_camera():
@@ -19,6 +40,8 @@ def init_camera():
     for pin in _MOTOR_PINS:
         # noinspection PyUnresolvedReferences
         GPIO.setup(pin, GPIO.OUT)
+    stepper_thread = StepperThread(_get_queue())
+    stepper_thread.start()
 
 
 def start_camera():
@@ -32,6 +55,10 @@ def stop_camera():
 
 
 def set_degree(degree: float):
+    _get_queue().put(degree)
+
+
+def _remote_set_degree(degree: float):
     _move_steps(1, 3, _map_angle(int(min(360.0, max(0.0, degree))), 0, 360, 0, 512))
 
 
