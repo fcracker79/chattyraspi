@@ -20,7 +20,8 @@ class StepperThread(threading.Thread):
 
     def run(self):
         while True:
-            _remote_set_degree(self._q.get())
+            direction, degree = self._q.get()
+            _remote_set_degree(direction, degree)
 
 
 def _get_queue():
@@ -42,6 +43,7 @@ def init_camera():
         GPIO.setup(pin, GPIO.OUT)
     stepper_thread = StepperThread(_get_queue())
     stepper_thread.start()
+    set_degree.current_degree = 0
 
 
 def start_camera():
@@ -55,11 +57,14 @@ def stop_camera():
 
 
 def set_degree(degree: float):
-    _get_queue().put(degree)
+    delta_degree, direction = degree - set_degree.current_degree, 1
+    if delta_degree < 0:
+        delta_degree, direction = -delta_degree, -1
+    _get_queue().put((direction, degree))
 
 
-def _remote_set_degree(degree: float):
-    _move_steps(1, 3, _map_angle(int(min(360.0, max(0.0, degree))), 0, 360, 0, 512))
+def _remote_set_degree(direction: int, degree: float):
+    _move_steps(direction, 3, _map_angle(int(min(360.0, max(0.0, degree))), 0, 360, 0, 512))
 
 
 def set_mode(mode: ThermostatMode):
@@ -99,3 +104,6 @@ def motor_stop():
         _LOGGER.info('GPIO.output(_MOTOR_PINS[%s], GPIO.LOW)', i)
         # noinspection PyUnresolvedReferences
         GPIO.output(_MOTOR_PINS[i], GPIO.LOW)
+
+
+set_degree.current_degree = 0
