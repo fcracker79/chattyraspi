@@ -6,7 +6,7 @@ import RPi.GPIO as GPIO
 
 _LOGGER = logging.getLogger('servomotor')
 
-_MOTOR_PINS = (1, 4, 5, 6)
+_MOTOR_PINS = (12, 16, 18, 22)
 _CCW_STEP = (0x01, 0x02, 0x04, 0x08)
 _CW_STEP = (0x08, 0x04, 0x02, 0x01)
 
