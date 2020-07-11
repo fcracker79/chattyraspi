@@ -59,7 +59,7 @@ def _move_one_period(direction: int, ms: int) -> None:
         _LOGGER.info("Step cycle!")
         if ms < 3:
             ms = 3
-            time.sleep(ms * 0.001)
+        time.sleep(ms * 0.001)
 
 
 def _move_steps(direction: int, ms: int, steps: int):
