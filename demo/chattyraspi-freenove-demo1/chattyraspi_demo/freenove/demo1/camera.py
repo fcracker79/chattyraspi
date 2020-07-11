@@ -61,6 +61,7 @@ def set_degree(degree: float):
     if delta_degree < 0:
         delta_degree, direction = -delta_degree, -1
     _get_queue().put((direction, degree))
+    set_degree.current_degree = degree
 
 
 def _remote_set_degree(direction: int, degree: float):
