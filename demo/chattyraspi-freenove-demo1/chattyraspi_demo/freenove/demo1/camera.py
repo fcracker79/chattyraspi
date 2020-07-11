@@ -32,7 +32,7 @@ def stop_camera():
 
 
 def set_degree(degree: float):
-    _move_one_period(1, _map_angle(int(min(360.0, max(0.0, degree))), 0, 360, 0, 512))
+    _move_steps(1, 3, _map_angle(int(min(360.0, max(0.0, degree))), 0, 360, 0, 512))
 
 
 def set_mode(mode: ThermostatMode):
