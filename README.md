@@ -10,9 +10,9 @@ Project structure
 
 The project is made of the following modules:
 
-1. [The Alexa Smart Home Skill](https://www.github.com/fcracker79/chattyraspi/skill): the skill enables the user to interact with his Raspberry Pi just like any Smart Home device
-2. [The Python clients](https://www.github.com/fcracker79/chattyraspi/clients): clients are the boilerplate code that allows your Raspberry Pi to receive commands from Alexa. Currently only Python 3.5+ is available
-3. [The Support Backend](https://www.github.com/fcracker79/chattyraspi/backend): backend support to manage your devices
+1. [The Alexa Smart Home Skill](https://www.github.com/fcracker79/chattyraspi/tree/master/skill): the skill enables the user to interact with his Raspberry Pi just like any Smart Home device
+2. [The Python clients](https://www.github.com/fcracker79/chattyraspi/tree/master/clients): clients are the boilerplate code that allows your Raspberry Pi to receive commands from Alexa. Currently only Python 3.5+ is available
+3. [The Support Backend](https://www.github.com/fcracker79/chattyraspi/tree/master/backend): backend support to manage your devices
 
 Usage
 -----

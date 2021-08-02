@@ -160,4 +160,4 @@ and backup of your data, and I will not be liable for any damages
 you may suffer in connection with using, modifying, or distributing 
 this software.
 
-[1]: https://raspberry.alexa.mirko.io/login
+[1]: https://chattyraspi.mirko.io/login
