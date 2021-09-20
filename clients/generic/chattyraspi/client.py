@@ -141,7 +141,7 @@ class DeviceIdClient:
             timeout_timer.daemon = True
             timeout_timer.start()
         reset_timer.timeout_timer = None
-        reset_timer.timeout_interval = 10
+        reset_timer.timeout_interval = 120
 
         def on_message(ws, msg):
             command_payload = json.loads(msg.payload.decode())
@@ -178,6 +178,7 @@ class DeviceIdClient:
                 execute_command(command_payload)
 
         def execute_command(command_payload: dict):
+            self._info('Executing command %s', command_payload)
             command = command_payload['data']['onCommandCreated']['command']
             command_id = command_payload['data']['onCommandCreated']['commandId']
             arguments = command_payload['data']['onCommandCreated']['arguments']
