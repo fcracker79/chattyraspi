@@ -49,7 +49,7 @@ class DeviceIdClient:
             'Authorization': openid_token
         }
         self._oidc_header = {
-            'host': urlparse(appsync_wss_url).netloc,
+            'host': urlparse(appsync_url).netloc,
             'Authorization': openid_token
         }
         self._device_id = device_id
@@ -67,7 +67,7 @@ class DeviceIdClient:
         self._logger = logging.getLogger('client.raspi.alexa.mirko.io')
         self._reconnect_time_seconds = reconnect_time_seconds
         self._appsync_url = appsync_url
-        self._appsync_wss_client = appsync_wss_url
+        self._appsync_wss_url = appsync_wss_url
 
     @property
     def device_id(self) -> str:
@@ -144,7 +144,8 @@ class DeviceIdClient:
         reset_timer.timeout_interval = 120
 
         def on_message(ws, msg):
-            command_payload = json.loads(msg.payload.decode())
+            self._info('On message: %s', msg)
+            command_payload = json.loads(msg)
             message_type = command_payload['type']
 
             if message_type == 'ka':
@@ -214,11 +215,10 @@ class DeviceIdClient:
         def on_error(ws, error):
             self._error('On error %s: %s', self._device_id, error)
 
-        def on_close(ws):
-            self._warning('On close %s', self._device_id)
+        def on_close(ws, *a):
+            self._warning('On close %s, %s', self._device_id, a)
 
         def on_open(ws):
-            print('### opened ###')
             init = {
                 'type': 'connection_init'
             }
@@ -226,9 +226,9 @@ class DeviceIdClient:
             print('>> ' + init_conn)
             ws.send(init_conn)
 
-        connection_url = f'{self._appsync_wss_client}?' \
-                         f'header={base64.b64encode(json.dumps(self._oidc_header))}&' \
-                         f'payload=e30='
+        payload = base64.urlsafe_b64encode(json.dumps({}).encode()).decode()
+        header = base64.urlsafe_b64encode(json.dumps(self._oidc_header).encode()).decode()
+        connection_url = f'{self._appsync_wss_url}?header={header}&payload={payload}'
 
         # noinspection PyTypeChecker
         client = websocket.WebSocketApp(
