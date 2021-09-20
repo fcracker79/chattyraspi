@@ -1,13 +1,15 @@
+import base64
 import enum
 import json
 import logging
+import threading
 import time
+import typing
 from concurrent.futures.thread import ThreadPoolExecutor
 from urllib.parse import urlparse
 
-import paho.mqtt.client as mqtt
 import requests
-import typing
+import websocket
 
 from chattyraspi.device import DevicesConfiguration
 
@@ -20,6 +22,8 @@ class GraphqlException(Exception):
 _ROOT_URL = 'https://c7knkzejobbqpnaz4gskh77nmm.appsync-api.eu-west-1.amazonaws.com/graphql'
 _DEV_ROOT_URL = 'https://dnbcs5up6jcyro7ejt3xgc4zbu.appsync-api.eu-west-1.amazonaws.com/graphql'
 
+_ROOT_WSS_URL = 'wss://c7knkzejobbqpnaz4gskh77nmm.appsync-realtime-api.eu-west-1.amazonaws.com/graphql'
+_DEV_ROOT_WSS_URL = 'wss://dnbcs5up6jcyro7ejt3xgc4zbu.appsync-realtime-api.eu-west-1.amazonaws.com/graphql'
 
 def _do_nothing(*_):
     pass
@@ -38,8 +42,14 @@ DeviceID = typing.NewType('DeviceID', str)
 
 class DeviceIdClient:
     # noinspection PyTypeChecker
-    def __init__(self, device_id: str, openid_token: str, reconnect_time_seconds: int, appsync_url: str):
+    def __init__(
+            self, device_id: str, openid_token: str, reconnect_time_seconds: int,
+            appsync_url: str, appsync_wss_url: str):
         self._headers = {
+            'Authorization': openid_token
+        }
+        self._oidc_header = {
+            'host': urlparse(appsync_wss_url).netloc,
             'Authorization': openid_token
         }
         self._device_id = device_id
@@ -57,6 +67,7 @@ class DeviceIdClient:
         self._logger = logging.getLogger('client.raspi.alexa.mirko.io')
         self._reconnect_time_seconds = reconnect_time_seconds
         self._appsync_url = appsync_url
+        self._appsync_wss_client = appsync_wss_url
 
     @property
     def device_id(self) -> str:
@@ -106,56 +117,67 @@ class DeviceIdClient:
 
     def _listen(self):
         self._info('Initializing client')
-        post_headers = {
-            'Content-Type': 'application/json',
-            **self._headers
-        }
+        subscription_payload = json.dumps(
+            {
+                "operationName": "onCommand",
+                "query": """subscription onCommand($deviceId: ID!) {
+                      onCommandCreated(deviceId: $deviceId) {
+                        commandId
+                        deviceId
+                        command
+                        arguments
+                        status
+                      }
+                    }
+                """,
+                "variables": {"deviceId": self._device_id}
+            }
+        )
 
-        payload = {
-            "operationName": "onCommand",
-            "query": """subscription onCommand($deviceId: ID!) {
-                  onCommandCreated(deviceId: $deviceId) {
-                    commandId
-                    deviceId
-                    command
-                    arguments
-                    status
-                  }
-                }
-            """,
-            "variables": {"deviceId": self._device_id}
-        }
+        def reset_timer(ws):
+            if reset_timer.timeout_timer:
+                reset_timer.timeout_timer.cancel()
+            timeout_timer = threading.Timer(reset_timer.timeout_interval, lambda: ws.close())
+            timeout_timer.daemon = True
+            timeout_timer.start()
+        reset_timer.timeout_timer = None
+        reset_timer.timeout_interval = 10
 
-        r = requests.post(self._appsync_url, headers=post_headers, json=payload)
-        try:
-            r.raise_for_status()
-        except Exception:
-            self._exception('Could not subscribe to device commands, status %s, response %s', r.status_code, r.content)
-            raise
-        data = r.json()
-        self._debug('Subscription response: %s', json.dumps(data, indent=3, sort_keys=True))
-
-        # if data.get('errors'):
-        #     raise ValueError('Error subscribing: {}'.format(data))
-        client_id = data['extensions']['subscription']['mqttConnections'][0]['client']
-        ws_url = r.json()['extensions']['subscription']['mqttConnections'][0]['url']
-        topic = r.json()['extensions']['subscription']['mqttConnections'][0]['topics'][0]
-
-        # noinspection PyUnusedLocal
-        def on_message(_client, _userdata, msg):
-            #  {
-            #      "data": {
-            #          "onCommandCreated": {
-            #              "commandId": "3cb6a547-1fea-4034-a98e-9e2b1c17aed6",
-            #              "deviceId": "device_001",
-            #              "command": "turnOn",
-            #              "arguments": [],
-            #              "status": 1,
-            #              "__typename": "Command"
-            #          }
-            #      }
-            #  }
+        def on_message(ws, msg):
             command_payload = json.loads(msg.payload.decode())
+            message_type = command_payload['type']
+
+            if message_type == 'ka':
+                reset_timer(ws)
+            elif message_type == 'connection_ack':
+                reset_timer.timeout_interval = int(json.dumps(command_payload['payload']['connectionTimeoutMs']))
+                self._info('Subscribing client %s', self._device_id)
+                register = {
+                    'id': self._device_id,
+                    'payload': {
+                        'data': subscription_payload,
+                        'extensions': {
+                            'authorization': self._oidc_header
+                        }
+                    },
+                    'type': 'start'
+                }
+                start_sub = json.dumps(register)
+                self._info('Start subscribing: %s', start_sub)
+                ws.send(start_sub)
+            elif message_type == 'error':
+                self._error('Error from AppSync: %s', command_payload)
+            elif message_type == 'data':
+                # deregister = {
+                #     'type': 'stop',
+                #     'id': self._device_id
+                # }
+                # end_sub = json.dumps(deregister)
+                # self._info('Unsubscribing, %s' + end_sub)
+                # ws.send(end_sub)
+                execute_command(command_payload)
+
+        def execute_command(command_payload: dict):
             command = command_payload['data']['onCommandCreated']['command']
             command_id = command_payload['data']['onCommandCreated']['commandId']
             arguments = command_payload['data']['onCommandCreated']['arguments']
@@ -188,38 +210,45 @@ class DeviceIdClient:
                 self._exception('Could not process command %s (%s)', command, command_id)
                 self._command_failed(command_id)
 
-        # noinspection PyUnusedLocal
-        def on_connect(_client, _userdata, flags, rc):
-            self._debug('Connected to subscription topic')
-            client.subscribe(topic)
-        urlparts = urlparse(ws_url)
+        def on_error(ws, error):
+            self._error('On error %s: %s', self._device_id, error)
 
-        headers = {
-            "Host": "{0:s}".format(urlparts.netloc),
-        }
+        def on_close(ws):
+            self._warning('On close %s', self._device_id)
 
-        client = mqtt.Client(client_id=client_id, transport="websockets")
-        client.enable_logger(logging.getLogger('paho-mqtt'))
-        client.on_connect = on_connect
-        client.on_message = on_message
-        client.on_log = lambda *a, **kw: self._info('On log(%s, %s)', a, kw, exc_info=True)
-        client.ws_set_options(path="{}?{}".format(urlparts.path, urlparts.query), headers=headers)
-        client.tls_set()
+        def on_open(ws):
+            print('### opened ###')
+            init = {
+                'type': 'connection_init'
+            }
+            init_conn = json.dumps(init)
+            print('>> ' + init_conn)
+            ws.send(init_conn)
+
+        connection_url = f'{self._appsync_wss_client}?' \
+                         f'header={base64.b64encode(json.dumps(self._oidc_header))}&' \
+                         f'payload=e30='
+
+        # noinspection PyTypeChecker
+        client = websocket.WebSocketApp(
+            connection_url,
+            subprotocols=['graphql-ws'],
+            on_open=on_open,
+            on_message=on_message,
+            on_error=on_error,
+            on_close=on_close)
 
         self._debug('Trying to connect now....')
-        client.connect(urlparts.netloc, 443)
+
         try:
             self._debug('Start looping. We will reconnect after %s seconds', self._reconnect_time_seconds)
-            client.loop_start()
-            time.sleep(self._reconnect_time_seconds)
-            self._debug('Timeout expiring')
-            client.loop_stop(force=True)
+            client.run_forever()
         except Exception:
             self._exception('Error looping forever')
             raise
         finally:
             self._debug('Disconnecting')
-            client.disconnect()
+            client.close()
             del client
 
     def _on_thermostat_changed(self, command_id: str) -> callable:
@@ -330,10 +359,11 @@ class Client:
             dev_environment: bool = False
     ):
         appsync_url = _DEV_ROOT_URL if dev_environment else _ROOT_URL
+        appsync_wss_url = _DEV_ROOT_WSS_URL if dev_environment else _ROOT_WSS_URL
         self._clients_by_device_id = {
             conf['device_id']: DeviceIdClient(
                 conf['device_id'], conf['openid_token'], reconnect_time_seconds,
-                appsync_url)
+                appsync_url, appsync_wss_url)
             for conf in configuration.get_configuration()['Devices']
         }
         self._logger = logging.getLogger('client.raspi.alexa.mirko.io')
