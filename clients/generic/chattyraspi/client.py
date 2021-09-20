@@ -168,6 +168,7 @@ class DeviceIdClient:
                 ws.send(start_sub)
             elif message_type == 'error':
                 self._error('Error from AppSync: %s', command_payload)
+                ws.close()
             elif message_type == 'data':
                 # deregister = {
                 #     'type': 'stop',
@@ -206,7 +207,7 @@ class DeviceIdClient:
                     self.on_set_thermostat_mode(self._device_id, ThermostatMode(arguments[0]))
                     response_execution = self._on_thermostat_changed(command_id)
                 else:
-                    raise ValueError('Unexpected command {}, payload {}'.format(msg.payload['command'], msg))
+                    raise ValueError('Unexpected command {}, payload {}'.format(command, command_payload))
                 response_execution()
             except Exception:
                 self._exception('Could not process command %s (%s)', command, command_id)
