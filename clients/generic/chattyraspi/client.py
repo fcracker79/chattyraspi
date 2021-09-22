@@ -119,8 +119,8 @@ class DeviceIdClient:
         self._info('Initializing client')
         subscription_payload = json.dumps(
             {
-                "operationName": "onCommand",
-                "query": """subscription onCommand($deviceId: ID!) {
+                "operationName": "onCommandPureWebsockets",
+                "query": """subscription onCommandPureWebsockets($deviceId: ID!) {
                       onCommandCreated(deviceId: $deviceId) {
                         commandId
                         deviceId
