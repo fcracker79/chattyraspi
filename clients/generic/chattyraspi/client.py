@@ -5,6 +5,7 @@ import logging
 import threading
 import time
 import typing
+import uuid
 from concurrent.futures.thread import ThreadPoolExecutor
 from urllib.parse import urlparse
 
@@ -152,9 +153,10 @@ class DeviceIdClient:
                 reset_timer(ws)
             elif message_type == 'connection_ack':
                 reset_timer.timeout_interval = int(json.dumps(command_payload['payload']['connectionTimeoutMs']))
-                self._info('Subscribing client %s', self._device_id)
+                subscription_id = str(uuid.uuid4())
+                self._info('Subscribing client %s, subscription_id %s', self._device_id, subscription_id)
                 register = {
-                    'id': self._device_id,
+                    'id': subscription_id,
                     'payload': {
                         'data': subscription_payload,
                         'extensions': {
@@ -177,7 +179,7 @@ class DeviceIdClient:
                 # end_sub = json.dumps(deregister)
                 # self._info('Unsubscribing, %s' + end_sub)
                 # ws.send(end_sub)
-                execute_command(command_payload)
+                execute_command(command_payload['payload'])
 
         def execute_command(command_payload: dict):
             self._info('Executing command %s', command_payload)
