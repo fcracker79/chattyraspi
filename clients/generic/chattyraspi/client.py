@@ -231,7 +231,7 @@ class DeviceIdClient:
 
         payload = base64.urlsafe_b64encode(json.dumps({}).encode()).decode()
         header = base64.urlsafe_b64encode(json.dumps(self._oidc_header).encode()).decode()
-        connection_url = f'{self._appsync_wss_url}?header={header}&payload={payload}'
+        connection_url = '{}?header={}&payload={}'.format(self._appsync_wss_url, header, payload)
 
         # noinspection PyTypeChecker
         client = websocket.WebSocketApp(

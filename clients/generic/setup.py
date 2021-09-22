@@ -27,7 +27,7 @@ def get_scripts() -> list:
 
 setup(
     name="chattyraspi",
-    version="0.1.0",
+    version="0.1.1",
     description="Allows interaction between Alexa and your Raspberry Pi",
     long_description=readfile("README.rst"),
     url="https://github.com/fcracker79/alexa-home-skill/clients/generic",
